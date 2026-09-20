@@ -679,6 +679,12 @@ function freshState(){
   };
 }
 
+// Set when loadState() found nothing in localStorage at all — used right
+// after startup to decide whether it's worth checking the Tauri-side file
+// backup (desktop app only) in case the browser's own storage came back
+// empty despite real data existing on disk.
+let stateWasEmptyOnLoad = false;
+
 let state = loadState();
 
 // Never silently drop data we couldn't make sense of — stash the raw string
@@ -691,11 +697,10 @@ function recoverFromUnreadableState(raw, message){
   setTimeout(() => alert(message), 0);
   return freshState();
 }
-
 function loadState(){
   try{
     const raw = localStorage.getItem(STORAGE_KEY);
-    if(!raw) return freshState();
+    if(!raw){ stateWasEmptyOnLoad = true; return freshState(); }
     // Anyone with existing data got here before the "Start here" nudge on
     // Budget existed — they've already started, so suppress it for them
     // instead of it popping up on someone's tenth week of using the app.
@@ -890,7 +895,17 @@ function ensureBaselineCategories(parsed){
 }
 
 function saveState(){
-  localStorage.setItem(STORAGE_KEY, JSON.stringify(state));
+  const json = JSON.stringify(state);
+  localStorage.setItem(STORAGE_KEY, json);
+  // In the desktop app, also mirror every save to a plain file via Rust —
+  // a reliable backup independent of the browser's own storage layer, which
+  // has proven to occasionally lose data between app launches. Best-effort:
+  // if this fails for any reason, localStorage above still has the save.
+  if(window.__TAURI__){
+    window.__TAURI__.core.invoke('save_state_file', { contents: json }).catch(err => {
+      console.error('Tauri file backup save failed:', err);
+    });
+  }
 }
 
 /* =========================================================================
@@ -2036,6 +2051,29 @@ function deferRenderAll(){
    ========================================================================= */
 updateBudgetStartBadge();
 showTab('dashboard');
+
+// If localStorage came back completely empty on load, double-check the
+// Rust-native file backup (desktop app only) before accepting that as "no
+// data yet" — self-heals the exact case where WebView2's own storage
+// silently lost data between launches even though a reliable copy still
+// exists on disk. window.__TAURI__ isn't guaranteed to exist yet this early
+// in a top-level script (a known upstream Tauri/Wry timing quirk), so wait
+// for DOMContentLoaded before checking for it.
+if(stateWasEmptyOnLoad){
+  window.addEventListener('DOMContentLoaded', () => {
+    if(!window.__TAURI__) return;
+    window.__TAURI__.core.invoke('load_state_file').then(raw => {
+      if(!raw) return;
+      let parsed;
+      try{ parsed = JSON.parse(raw); }catch(e){ console.error('Tauri file backup unreadable:', e); return; }
+      if(!parsed.categories || !parsed.weeks || !parsed.months || !parsed.accounts) return;
+      state = ensureBaselineCategories(migrateState(parsed));
+      saveState();
+      renderAll();
+      showToast('Recovered your data from backup');
+    }).catch(err => console.error('Tauri file backup check failed:', err));
+  });
+}
 </script>
 </body>
 </html>
