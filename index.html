@@ -679,11 +679,25 @@ function freshState(){
   };
 }
 
+// MUST stay above `let state = loadState()`: loadState() -> ensureBaselineCategories()
+// reads this at startup, and a const read before its declaration line throws.
+// That exact ordering mistake made every launch with saved data silently fall
+// back to a blank state. test/state.test.js guards against it.
+const CATEGORIES_ADDED_LATER = [
+  { kind:'expense', id:'oil', name:'Oil', estimate:0, recurring:true, dueDay:null, frequency:'monthly', biweeklyAnchor:null, monthlyWeek:1, anchorMonth:0 },
+  { kind:'expense', id:'transportation', name:'Transportation', estimate:0, recurring:true, dueDay:null, frequency:'monthly', biweeklyAnchor:null, monthlyWeek:1, anchorMonth:0 },
+  { kind:'expense', id:'gas_vehicles', name:'Gas for Vehicles', estimate:0, recurring:true, dueDay:null, frequency:'monthly', biweeklyAnchor:null, monthlyWeek:1, anchorMonth:0 },
+];
+
 // Set when loadState() found nothing in localStorage at all — used right
 // after startup to decide whether it's worth checking the Tauri-side file
 // backup (desktop app only) in case the browser's own storage came back
 // empty despite real data existing on disk.
 let stateWasEmptyOnLoad = false;
+// While true, saveState() does NOT mirror to the Tauri backup file. Otherwise the
+// blank state saved during the very first render could overwrite the backup
+// before the recovery check below has had a chance to read it.
+let awaitingTauriRecovery = false;
 
 let state = loadState();
 
@@ -698,9 +712,10 @@ function recoverFromUnreadableState(raw, message){
   return freshState();
 }
 function loadState(){
+  let raw = null;
   try{
-    const raw = localStorage.getItem(STORAGE_KEY);
-    if(!raw){ stateWasEmptyOnLoad = true; return freshState(); }
+    raw = localStorage.getItem(STORAGE_KEY);
+    if(!raw){ stateWasEmptyOnLoad = true; awaitingTauriRecovery = true; return freshState(); }
     // Anyone with existing data got here before the "Start here" nudge on
     // Budget existed — they've already started, so suppress it for them
     // instead of it popping up on someone's tenth week of using the app.
@@ -716,7 +731,12 @@ function loadState(){
     }
     return ensureBaselineCategories(migrateState(parsed));
   }catch(e){
-    console.error('Failed to load state, starting fresh.', e);
+    // Saved data existed but something unexpected went wrong reading or
+    // migrating it. That must never look like "no data": keep the raw copy
+    // and say so, instead of quietly handing back a blank state that the
+    // next save would then overwrite the real data with.
+    console.error('Failed to load saved state.', e);
+    if(raw) return recoverFromUnreadableState(raw, 'Something went wrong while opening your saved data. A backup copy has been kept — use Budget → Import backup to restore, or contact support. Nothing has been erased.');
     return freshState();
   }
 }
@@ -875,11 +895,6 @@ function migrateState(parsed){
 // that predates them. NOT the same as DEFAULT_CATEGORIES (that would also
 // resurrect built-in categories a user deliberately deleted) — this list only
 // ever grows when a *new* built-in category is introduced in an update.
-const CATEGORIES_ADDED_LATER = [
-  { kind:'expense', id:'oil', name:'Oil', estimate:0, recurring:true, dueDay:null, frequency:'monthly', biweeklyAnchor:null, monthlyWeek:1, anchorMonth:0 },
-  { kind:'expense', id:'transportation', name:'Transportation', estimate:0, recurring:true, dueDay:null, frequency:'monthly', biweeklyAnchor:null, monthlyWeek:1, anchorMonth:0 },
-  { kind:'expense', id:'gas_vehicles', name:'Gas for Vehicles', estimate:0, recurring:true, dueDay:null, frequency:'monthly', biweeklyAnchor:null, monthlyWeek:1, anchorMonth:0 },
-];
 function ensureBaselineCategories(parsed){
   if(!parsed._seenCategoryIds) parsed._seenCategoryIds = [];
   for(const want of CATEGORIES_ADDED_LATER){
@@ -901,7 +916,7 @@ function saveState(){
   // a reliable backup independent of the browser's own storage layer, which
   // has proven to occasionally lose data between app launches. Best-effort:
   // if this fails for any reason, localStorage above still has the save.
-  if(window.__TAURI__){
+  if(window.__TAURI__ && !awaitingTauriRecovery){
     window.__TAURI__.core.invoke('save_state_file', { contents: json }).catch(err => {
       console.error('Tauri file backup save failed:', err);
     });
@@ -2061,17 +2076,26 @@ showTab('dashboard');
 // for DOMContentLoaded before checking for it.
 if(stateWasEmptyOnLoad){
   window.addEventListener('DOMContentLoaded', () => {
-    if(!window.__TAURI__) return;
+    const finish = () => { awaitingTauriRecovery = false; };
+    if(!window.__TAURI__){ finish(); return; }
     window.__TAURI__.core.invoke('load_state_file').then(raw => {
-      if(!raw) return;
-      let parsed;
-      try{ parsed = JSON.parse(raw); }catch(e){ console.error('Tauri file backup unreadable:', e); return; }
-      if(!parsed.categories || !parsed.weeks || !parsed.months || !parsed.accounts) return;
-      state = ensureBaselineCategories(migrateState(parsed));
-      saveState();
-      renderAll();
-      showToast('Recovered your data from backup');
-    }).catch(err => console.error('Tauri file backup check failed:', err));
+      if(raw){
+        let parsed = null;
+        try{ parsed = JSON.parse(raw); }catch(e){ console.error('Tauri file backup unreadable:', e); }
+        if(parsed && parsed.categories && parsed.weeks && parsed.months && parsed.accounts){
+          state = ensureBaselineCategories(migrateState(parsed));
+          finish();
+          saveState();
+          renderAll();
+          showToast('Recovered your data from backup');
+          return;
+        }
+        // Present but unusable: keep a copy before anything can overwrite it.
+        try{ localStorage.setItem(STORAGE_KEY + '.file-recovery-' + Date.now(), raw); }catch(e){}
+      }
+      finish();
+      saveState(); // nothing to recover — start mirroring the current state
+    }).catch(err => { console.error('Tauri file backup check failed:', err); finish(); });
   });
 }
 </script>
