@@ -43,7 +43,7 @@ There are two ways to use the app — pick whichever fits:
    - **macOS** — open the `.dmg` and drag **Expense Tracker** into **Applications**.
    - **Linux (AppImage)** — make it executable and run it directly: `chmod +x Expense.Tracker_*.AppImage && ./Expense.Tracker_*.AppImage`
    - **Linux (.deb)** — `sudo apt install ./Expense.Tracker_*.deb` (or `sudo dpkg -i`).
-4. Launch it. It opens to the intro screen first — tap **Open the Tracker** to get into the app itself.
+4. Launch it. The first time, it opens to an intro screen — tap **Open the Tracker** to get into the app itself. After that, it remembers you've already been through it and opens straight to the tracker on every future launch. (You can still get back to the intro/guide page anytime via the **?** button in the app's header.)
 
 ### A warning you'll probably see the first time
 

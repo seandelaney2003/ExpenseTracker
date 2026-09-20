@@ -2,6 +2,19 @@
 <html lang="en">
 <head>
 <meta charset="UTF-8">
+<script>
+// Skip straight to the tracker on a cold launch for anyone who already has
+// saved data — they've already seen this pitch, so it shouldn't be in the
+// way every single time the desktop app opens. A deliberate in-app visit
+// here (the "?" button inside the tracker) still shows this page normally:
+// document.referrer is empty only on a fresh navigation, not one clicked
+// into from inside the app itself.
+try {
+  if (!document.referrer && localStorage.getItem('expenseTrackerData.v1')) {
+    window.location.replace('index.html');
+  }
+} catch (e) {}
+</script>
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <meta name="theme-color" content="#0b1512">
 <title>Expense Tracker — Know your money, every Friday</title>
