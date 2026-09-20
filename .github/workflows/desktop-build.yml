@@ -6,9 +6,16 @@ name: Build Desktop App
 #
 # Trigger manually from the Actions tab any time, or push a tag like
 # "v1.0.0" to build a release set.
+#
+# The test suite (test/, plain `node --test`, no dependencies) runs on every
+# push to main and every pull request, and the installers are only built —
+# and a release only published — if it passes.
 on:
   workflow_dispatch:
+  pull_request:
   push:
+    branches:
+      - main
     tags:
       - 'v*'
 
@@ -16,7 +23,20 @@ permissions:
   contents: write  # needed to publish the GitHub Release when a tag is pushed
 
 jobs:
+  test:
+    name: Test suite
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+      - run: node --test
+
   build:
+    needs: test
+    # Installers are only built for releases/manual runs, not on every push.
+    if: github.event_name == 'workflow_dispatch' || startsWith(github.ref, 'refs/tags/')
     strategy:
       fail-fast: false
       matrix:

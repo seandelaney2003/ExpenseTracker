@@ -25,3 +25,6 @@ _full.js
 _test_body.js
 _stubs.js
 _combined.js
+
+# Downloaded release installers (large binaries)
+V4/

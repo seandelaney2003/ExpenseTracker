@@ -1,0 +1,8 @@
+{
+  "name": "expense-tracker",
+  "private": true,
+  "description": "Tests for the Expense Tracker web/desktop app. The app itself has no build step and no dependencies.",
+  "scripts": {
+    "test": "node --test"
+  }
+}
