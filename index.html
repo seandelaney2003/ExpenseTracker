@@ -72,6 +72,13 @@ input[type=number]::-webkit-inner-spin-button{-webkit-appearance:none; margin:0;
   box-shadow:0 1px 3px rgba(0,0,0,.35);
 }
 .appbar h1{font-size:1.05rem; letter-spacing:.2px;}
+.appbar-right{display:flex; align-items:center; gap:10px;}
+.hdr-help-btn{
+  width:26px; height:26px; border-radius:50%; border:1px solid var(--border); flex:none;
+  background:var(--bg-sunken); color:var(--text-faint); font-size:.8rem; font-weight:700;
+  display:flex; align-items:center; justify-content:center; text-decoration:none;
+}
+.hdr-help-btn:active{color:var(--accent); border-color:var(--accent);}
 .appbar .balance-pill{
   display:flex; gap:8px; font-size:.72rem; color:var(--text-dim);
 }
@@ -357,11 +364,22 @@ table.mgrid tr.row-balance td{color:var(--accent);}
   display:flex; padding-bottom: env(safe-area-inset-bottom);
 }
 .tabbar button{
-  flex:1; background:none; border:none; padding:9px 4px 8px; cursor:pointer;
+  position:relative; flex:1; background:none; border:none; padding:9px 4px 8px; cursor:pointer;
   color:var(--text-faint); display:flex; flex-direction:column; align-items:center; gap:3px; font-size:.65rem; font-weight:600;
 }
 .tabbar button svg{width:22px; height:22px;}
 .tabbar button.active{color:var(--accent);}
+/* First-run nudge: shown on the Budget tab until a new user actually opens
+   it once (that's the only tab with a real "must be first" requirement —
+   Home/Weekly/Monthly are used interchangeably after setup, so they don't
+   get one). Dismissed permanently the first time showTab('budget') runs. */
+.tab-badge{
+  position:absolute; top:2px; right:calc(50% - 30px);
+  background:var(--accent); color:var(--accent-text); font-size:.56rem; font-weight:800;
+  padding:2px 6px; border-radius:999px; white-space:nowrap; letter-spacing:.2px;
+  animation:tabBadgePulse 1.8s ease-in-out infinite;
+}
+@keyframes tabBadgePulse{0%,100%{transform:scale(1);} 50%{transform:scale(1.08);}}
 
 /* ---------- Modal ---------- */
 .modal-overlay{
@@ -396,7 +414,10 @@ table.mgrid tr.row-balance td{color:var(--accent);}
     <span class="logomark" aria-hidden="true">$</span>
     <h1>Expense Tracker</h1>
   </div>
-  <div class="balance-pill">Total <b id="hdr-total">$0</b></div>
+  <div class="appbar-right">
+    <div class="balance-pill">Total <b id="hdr-total">$0</b></div>
+    <a class="hdr-help-btn" href="home.html" title="Back to home &amp; instructions" aria-label="Back to home and instructions">?</a>
+  </div>
 </header>
 
 <main>
@@ -556,6 +577,7 @@ table.mgrid tr.row-balance td{color:var(--accent);}
     Monthly
   </button>
   <button data-tab="budget" onclick="showTab('budget')">
+    <span class="tab-badge" id="budget-start-badge">Start here</span>
     <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 6h16M4 12h16M4 18h10"/></svg>
     Budget
   </button>
@@ -580,6 +602,7 @@ table.mgrid tr.row-balance td{color:var(--accent);}
    DATA MODEL
    ========================================================================= */
 const STORAGE_KEY = 'expenseTrackerData.v1';
+const BUDGET_BADGE_SEEN_KEY = 'expenseTrackerData.v1.seenBudgetStartBadge';
 
 // `recurring:true` categories use the plan-once-in-Budget model (a global
 // weekly default any single week can override). `recurring:false` categories
@@ -662,6 +685,10 @@ function loadState(){
   try{
     const raw = localStorage.getItem(STORAGE_KEY);
     if(!raw) return freshState();
+    // Anyone with existing data got here before the "Start here" nudge on
+    // Budget existed — they've already started, so suppress it for them
+    // instead of it popping up on someone's tenth week of using the app.
+    localStorage.setItem(BUDGET_BADGE_SEEN_KEY, '1');
     const parsed = JSON.parse(raw);
     if(!parsed.categories || !parsed.weeks || !parsed.months || !parsed.accounts) return freshState();
     return ensureBaselineCategories(migrateState(parsed));
@@ -1163,11 +1190,19 @@ function toggleCalendarInfo(){
   if(el) el.classList.toggle('open');
 }
 
+function updateBudgetStartBadge(){
+  const badge = document.getElementById('budget-start-badge');
+  if(badge) badge.style.display = localStorage.getItem(BUDGET_BADGE_SEEN_KEY) ? 'none' : '';
+}
 function showTab(tab){
   activeTab = tab;
   document.querySelectorAll('.view').forEach(v=>v.classList.remove('active'));
   document.getElementById('view-'+tab).classList.add('active');
   document.querySelectorAll('.tabbar button').forEach(b=>b.classList.toggle('active', b.dataset.tab===tab));
+  if(tab === 'budget'){
+    localStorage.setItem(BUDGET_BADGE_SEEN_KEY, '1');
+    updateBudgetStartBadge();
+  }
   renderAll();
   window.scrollTo({top:0});
 }
@@ -1981,6 +2016,7 @@ function deferRenderAll(){
 /* =========================================================================
    INIT
    ========================================================================= */
+updateBudgetStartBadge();
 showTab('dashboard');
 </script>
 </body>
