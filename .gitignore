@@ -16,6 +16,9 @@ desktop-app/node_modules/
 desktop-app/src-tauri/target/
 desktop-app/src/
 
+# iOS signing material — private keys/certs, never committed
+desktop-app/ios-signing/
+
 # Local scratch/test files
 _check.js
 _full.js
