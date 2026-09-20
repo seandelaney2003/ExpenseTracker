@@ -1903,8 +1903,8 @@ function importData(evt){
   reader.onload = () => {
     try{
       const parsed = JSON.parse(reader.result);
-      if(!parsed.categories || !parsed.weeks || !parsed.accounts) throw new Error('bad format');
-      state = parsed;
+      if(!parsed.categories || !parsed.weeks || !parsed.months || !parsed.accounts) throw new Error('bad format');
+      state = ensureBaselineCategories(migrateState(parsed));
       saveState();
       renderAll();
       showToast('Backup imported');
