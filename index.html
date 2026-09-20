@@ -3,38 +3,29 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
-<meta name="theme-color" content="#0f172a">
+<meta name="theme-color" content="#0b1512">
 <meta name="mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
 <title>Expense Tracker</title>
 <style>
+/* One fixed palette, always — not tied to the OS light/dark setting. Money
+   app, so green is the through-line: the accent (buttons, focus, selected
+   states) and positive amounts both live in the green family, at different
+   brightness so they stay visually distinct from each other. */
 :root{
-  --bg:#f4f5f7; --bg-elev:#ffffff; --bg-sunken:#eceef2;
-  --text:#14171f; --text-dim:#5b6472; --text-faint:#8a92a1;
-  --border:#e2e5ea;
-  --accent:#2563eb; --accent-text:#ffffff;
-  --pos:#0f9d58; --pos-bg:#e6f6ec;
-  --neg:#d93025; --neg-bg:#fdeceb;
-  --warn:#b7791f; --warn-bg:#fdf3e2;
-  --income:#0f9d58; --expense:#d93025;
-  --shadow: 0 1px 2px rgba(16,24,40,.06), 0 1px 3px rgba(16,24,40,.08);
+  --bg:#0b1512; --bg-elev:#132019; --bg-sunken:#0a100c;
+  --text:#eaf2ec; --text-dim:#9db3a6; --text-faint:#67857a;
+  --border:#1f3226;
+  --accent:#22c55e; --accent-text:#062b14;
+  --pos:#4ade80; --pos-bg:#123423;
+  --neg:#ff6b6b; --neg-bg:#2c1414;
+  --warn:#f0b649; --warn-bg:#2a2110;
+  --income:#4ade80; --expense:#ff6b6b;
+  --shadow: 0 1px 2px rgba(0,0,0,.4), 0 2px 6px rgba(0,0,0,.35);
   --radius: 14px;
   --radius-sm: 10px;
   font-size: 16px;
-}
-@media (prefers-color-scheme: dark){
-  :root{
-    --bg:#0d1117; --bg-elev:#161b22; --bg-sunken:#0a0d12;
-    --text:#e6e9ef; --text-dim:#9aa4b2; --text-faint:#6b7484;
-    --border:#262c37;
-    --accent:#5b9dff; --accent-text:#0a0d12;
-    --pos:#3ddc84; --pos-bg:#0f2b1c;
-    --neg:#ff6b6b; --neg-bg:#2c1414;
-    --warn:#f0b649; --warn-bg:#2a2110;
-    --income:#3ddc84; --expense:#ff6b6b;
-    --shadow: 0 1px 2px rgba(0,0,0,.4), 0 2px 6px rgba(0,0,0,.35);
-  }
 }
 *{box-sizing:border-box; -webkit-tap-highlight-color:transparent;}
 html,body{height:100%;}
@@ -71,6 +62,14 @@ input[type=number]::-webkit-inner-spin-button{-webkit-appearance:none; margin:0;
   background:var(--bg-elev); border-bottom:1px solid var(--border);
   padding: calc(10px + env(safe-area-inset-top)) 16px 10px;
   display:flex; align-items:center; justify-content:space-between;
+}
+.appbar-title{display:flex; align-items:center; gap:9px;}
+.logomark{
+  width:26px; height:26px; border-radius:8px; flex:none;
+  background:linear-gradient(160deg, var(--accent), #16994a);
+  color:var(--accent-text); font-weight:800; font-size:.92rem;
+  display:flex; align-items:center; justify-content:center;
+  box-shadow:0 1px 3px rgba(0,0,0,.35);
 }
 .appbar h1{font-size:1.05rem; letter-spacing:.2px;}
 .appbar .balance-pill{
@@ -393,7 +392,10 @@ table.mgrid tr.row-balance td{color:var(--accent);}
 <body>
 
 <header class="appbar">
-  <h1>Expense Tracker</h1>
+  <div class="appbar-title">
+    <span class="logomark" aria-hidden="true">$</span>
+    <h1>Expense Tracker</h1>
+  </div>
   <div class="balance-pill">Total <b id="hdr-total">$0</b></div>
 </header>
 
@@ -483,7 +485,7 @@ table.mgrid tr.row-balance td{color:var(--accent);}
       <div class="cal-grid" id="mo-calendar"></div>
       <div class="cal-hint">Tap &#9432; in the corner for how this calendar works.</div>
       <div class="cal-info-panel" id="cal-info-panel">
-        <b>How this calendar works:</b> any day shows each income/expense item with that Due day set in Budget, listed <i>separately</i> — nothing is added together on a plain day. Hover or tap a day to see the full list plus its total in a tooltip. <b>Fridays</b> are different: they show your whole week's income minus expenses <i>added up</i>, marked with <b>&Sigma;</b> so a real sum is never confused with the individual amounts on other days. A <span style="color:var(--accent); font-weight:600;">blue dot</span> on a Friday means something is also specifically due that day. An <span style="color:var(--warn); font-weight:600;">amber dot</span> means that week has an unpaid expense. Tap any day to jump to its week in the spreadsheet below.
+        <b>How this calendar works:</b> any day shows each income/expense item with that Due day set in Budget, listed <i>separately</i> — nothing is added together on a plain day. Hover or tap a day to see the full list plus its total in a tooltip. <b>Fridays</b> are different: they show your whole week's income minus expenses <i>added up</i>, marked with <b>&Sigma;</b> so a real sum is never confused with the individual amounts on other days. A <span style="color:var(--accent); font-weight:600;">green dot</span> on a Friday means something is also specifically due that day. An <span style="color:var(--warn); font-weight:600;">amber dot</span> means that week has an unpaid expense. Tap any day to jump to its week in the spreadsheet below.
       </div>
     </div>
 
@@ -497,7 +499,7 @@ table.mgrid tr.row-balance td{color:var(--accent);}
 
     <div class="card" id="mo-spreadsheet-card">
       <h3 style="margin-bottom:2px;">Spreadsheet View</h3>
-      <div class="faint" style="font-size:.72rem; margin-bottom:8px;">Check items off as they clear. A blue box or the &#8630; badge means this week's amount was changed from the recurring plan — tap &#8630; to go back to the plan. <span style="color:var(--warn); font-weight:600;">Amber</span> expense cells are unpaid — check them off once they're paid.</div>
+      <div class="faint" style="font-size:.72rem; margin-bottom:8px;">Check items off as they clear. A green box or the &#8630; badge means this week's amount was changed from the recurring plan — tap &#8630; to go back to the plan. <span style="color:var(--warn); font-weight:600;">Amber</span> expense cells are unpaid — check them off once they're paid.</div>
       <div class="grid-scroll">
         <table class="mgrid" id="mo-grid"></table>
       </div>
@@ -624,7 +626,9 @@ function expenseGroupOf(c){
 // `debt:true` accounts (credit cards, etc.) always hold what's owed as a
 // negative number, so they subtract from the combined Total automatically —
 // enforced in normalizeAccountValue regardless of the sign someone types.
-const ACCOUNTS = [
+// This is only the seed list for a brand-new install — the live, editable
+// list a user can add/rename/remove accounts from is state.accountDefs.
+const DEFAULT_ACCOUNTS = [
   { id:'checking', name:'Checking', debt:false },
   { id:'savings', name:'Savings', debt:false },
   { id:'otherBank', name:'Other Bank', debt:false },
@@ -634,16 +638,18 @@ const ACCOUNTS = [
 ];
 function normalizeAccountValue(accountId, value){
   if(value===null || value===undefined) return value;
-  const acct = ACCOUNTS.find(a=>a.id===accountId);
+  const acct = state.accountDefs.find(a=>a.id===accountId);
   return (acct && acct.debt) ? -Math.abs(value) : value;
 }
 
 function freshState(){
+  const accountDefs = JSON.parse(JSON.stringify(DEFAULT_ACCOUNTS));
   const accounts = { updatedAt: null };
-  for(const a of ACCOUNTS) accounts[a.id] = 0;
+  for(const a of accountDefs) accounts[a.id] = 0;
   return {
-    version: 7,
+    version: 8,
     accounts,
+    accountDefs,
     categories: JSON.parse(JSON.stringify(DEFAULT_CATEGORIES)),
     weeks: {},   // key: 'YYYY-MM-DD' (friday) -> { income:{id:{override,actual,checked}}, expense:{...}, <accountId>:null, ... }
     months: {}   // key: 'YYYY-MM' -> { start:{<accountId>:n, ...}, startCapturedAt }
@@ -725,12 +731,12 @@ function migrateState(parsed){
     const movedExpenseIds = ['credit_card_1','credit_card_2','other_expense'];
     for(const key in parsed.weeks){
       const w = parsed.weeks[key];
-      for(const a of ACCOUNTS) if(w[a.id]===undefined) w[a.id] = null;
+      for(const a of DEFAULT_ACCOUNTS) if(w[a.id]===undefined) w[a.id] = null;
       const exp = w.expense || {};
       for(const oldId of movedExpenseIds) delete exp[oldId];
     }
     parsed.categories.expense = (parsed.categories.expense||[]).filter(c => !movedExpenseIds.includes(c.id));
-    for(const a of ACCOUNTS) if(parsed.accounts[a.id]===undefined) parsed.accounts[a.id] = 0;
+    for(const a of DEFAULT_ACCOUNTS) if(parsed.accounts[a.id]===undefined) parsed.accounts[a.id] = 0;
     // month-start balances move from flat startChecking/startSavings/... to a
     // single nested `start` object keyed by account id, so any account (old
     // or new) can be summed the same way.
@@ -745,7 +751,7 @@ function migrateState(parsed){
         };
         delete m.startChecking; delete m.startSavings; delete m.startOtherBank;
       }
-      for(const a of ACCOUNTS) if(m.start[a.id]===undefined) m.start[a.id] = 0;
+      for(const a of DEFAULT_ACCOUNTS) if(m.start[a.id]===undefined) m.start[a.id] = 0;
     }
     for(const c of (parsed.categories.income||[])) if(!c.frequency) c.frequency = 'monthly';
     for(const c of (parsed.categories.expense||[])) if(!c.frequency) c.frequency = 'monthly';
@@ -755,7 +761,7 @@ function migrateState(parsed){
     // Debt accounts (Credit Card 1/2, Other) always represent money owed —
     // force any already-entered positive balances negative so they actually
     // subtract from Total, instead of relying on someone remembering "-".
-    const debtIds = ACCOUNTS.filter(a=>a.debt).map(a=>a.id);
+    const debtIds = DEFAULT_ACCOUNTS.filter(a=>a.debt).map(a=>a.id);
     for(const id of debtIds){
       if(parsed.accounts[id]!==undefined && parsed.accounts[id]!==null){
         parsed.accounts[id] = -Math.abs(Number(parsed.accounts[id])||0);
@@ -804,6 +810,13 @@ function migrateState(parsed){
       if(!c.group) c.group = groupById[c.id] || 'Other';
     }
     parsed.version = 7;
+  }
+  if((parsed.version||1) < 8){
+    // Accounts move from a fixed built-in list to a user-editable one. Seed
+    // it with the same six accounts everyone already has data under, so
+    // nothing changes for existing users until they add/rename/remove one.
+    if(!parsed.accountDefs) parsed.accountDefs = JSON.parse(JSON.stringify(DEFAULT_ACCOUNTS));
+    parsed.version = 8;
   }
   return parsed;
 }
@@ -880,14 +893,14 @@ function wholeDollar(value){
 function ensureWeek(key){
   if(!state.weeks[key]){
     const entry = { income:{}, expense:{} };
-    for(const a of ACCOUNTS) entry[a.id] = null;
+    for(const a of state.accountDefs) entry[a.id] = null;
     for(const c of state.categories.income) entry.income[c.id] = { override:null, actual:null, checked:false };
     for(const c of state.categories.expense) entry.expense[c.id] = { override:null, actual:null, checked:false };
     state.weeks[key] = entry;
   } else {
     // reconcile categories/accounts added/removed since this week was created
     const w = state.weeks[key];
-    for(const a of ACCOUNTS) if(w[a.id]===undefined) w[a.id] = null;
+    for(const a of state.accountDefs) if(w[a.id]===undefined) w[a.id] = null;
     for(const c of state.categories.income) if(!w.income[c.id]) w.income[c.id] = { override:null, actual:null, checked:false };
     for(const c of state.categories.expense) if(!w.expense[c.id]) w.expense[c.id] = { override:null, actual:null, checked:false };
   }
@@ -945,7 +958,7 @@ function isOverridden(entry){
 }
 
 function accountsHaveSnapshot(w){
-  return ACCOUNTS.some(a => w[a.id]!==null && w[a.id]!==undefined);
+  return state.accountDefs.some(a => w[a.id]!==null && w[a.id]!==undefined);
 }
 
 function ensureMonthStart(monthKey){
@@ -954,7 +967,7 @@ function ensureMonthStart(monthKey){
   const { year, month } = parseMonthKey(monthKey);
   const prevSnapshot = findLatestSnapshotBefore(new Date(year, month, 1));
   const start = {};
-  for(const a of ACCOUNTS) start[a.id] = prevSnapshot ? prevSnapshot[a.id] : (Number(state.accounts[a.id])||0);
+  for(const a of state.accountDefs) start[a.id] = prevSnapshot ? prevSnapshot[a.id] : (Number(state.accounts[a.id])||0);
   const rec = { start, startCapturedAt: new Date().toISOString() };
   state.months[monthKey] = rec;
   saveState();
@@ -967,7 +980,7 @@ function findLatestSnapshotBefore(date){
   keys.sort();
   const last = state.weeks[keys[keys.length-1]];
   const out = {};
-  for(const a of ACCOUNTS) out[a.id] = last[a.id]!==null ? last[a.id] : (Number(state.accounts[a.id])||0);
+  for(const a of state.accountDefs) out[a.id] = last[a.id]!==null ? last[a.id] : (Number(state.accounts[a.id])||0);
   return out;
 }
 
@@ -979,7 +992,7 @@ function findLatestSnapshotWithin(monthKey){
     const w = state.weeks[k];
     if(w && accountsHaveSnapshot(w)){
       found = { key:k };
-      for(const a of ACCOUNTS) found[a.id] = w[a.id];
+      for(const a of state.accountDefs) found[a.id] = w[a.id];
     }
   }
   return found;
@@ -1071,7 +1084,7 @@ function monthIncomeCollectedStatus(monthKey){
 }
 
 function sumAccounts(obj){
-  return ACCOUNTS.reduce((sum,a) => sum + (Number(obj[a.id])||0), 0);
+  return state.accountDefs.reduce((sum,a) => sum + (Number(obj[a.id])||0), 0);
 }
 function currentAccountsTotal(){
   return sumAccounts(state.accounts);
@@ -1087,7 +1100,7 @@ function monthSummary(monthKey){
   let actEnd = null;
   if(snap){
     const merged = {};
-    for(const a of ACCOUNTS) merged[a.id] = snap[a.id]!==null && snap[a.id]!==undefined ? snap[a.id] : start.start[a.id];
+    for(const a of state.accountDefs) merged[a.id] = snap[a.id]!==null && snap[a.id]!==undefined ? snap[a.id] : start.start[a.id];
     actEnd = sumAccounts(merged);
   } else if(monthKey === monthKeyOf(today)){
     actEnd = currentAccountsTotal();
@@ -1182,7 +1195,7 @@ function stepMonth(delta){
    ========================================================================= */
 function renderDashboard(){
   const total = currentAccountsTotal();
-  document.getElementById('dash-balances').innerHTML = ACCOUNTS.map(a => `
+  document.getElementById('dash-balances').innerHTML = state.accountDefs.map(a => `
     <div class="bal-tile"><div class="lbl">${a.name}</div><div class="val num ${a.debt?'neg':''}">${money(Number(state.accounts[a.id])||0)}</div></div>
   `).join('') + `<div class="bal-tile bal-tile-total"><div class="lbl">Total</div><div class="val num ${total<0?'neg':''}">${money(total)}</div></div>`;
   document.getElementById('hdr-total').textContent = money(total);
@@ -1261,7 +1274,7 @@ function renderWeekly(){
   document.getElementById('wk-net-est').textContent = money(t.estNet);
   document.getElementById('wk-net-act').textContent = money(t.actNet);
 
-  document.getElementById('wk-account-rows').innerHTML = ACCOUNTS.map(a => `
+  document.getElementById('wk-account-rows').innerHTML = state.accountDefs.map(a => `
     <div class="bal-input-row">
       <span>${a.name}</span>
       <span class="dollar-field"><input type="number" step="1" inputmode="numeric" id="${accountDomId(a.id)}" value="${w[a.id]!==null?w[a.id]:''}" oninput="updateWeekBalance()"></span>
@@ -1330,12 +1343,12 @@ function accountDomId(accountId){ return 'wk-'+accountId.toLowerCase(); }
 // keys being changed need to be present.
 function applyWeekBalance(weekKey, updates){
   const w = ensureWeek(weekKey);
-  for(const a of ACCOUNTS){
+  for(const a of state.accountDefs){
     if(updates[a.id] !== undefined) w[a.id] = normalizeAccountValue(a.id, updates[a.id]);
   }
   // if this is the most recent known snapshot overall, it becomes the "current" balance
   if(isMostRecentSnapshot(weekKey)){
-    for(const a of ACCOUNTS) if(w[a.id]!==null) state.accounts[a.id] = w[a.id];
+    for(const a of state.accountDefs) if(w[a.id]!==null) state.accounts[a.id] = w[a.id];
     state.accounts.updatedAt = new Date().toISOString();
   }
   saveState();
@@ -1343,7 +1356,7 @@ function applyWeekBalance(weekKey, updates){
 
 function updateWeekBalance(){
   const updates = {};
-  for(const a of ACCOUNTS){
+  for(const a of state.accountDefs){
     const val = document.getElementById(accountDomId(a.id)).value;
     updates[a.id] = val===''? null : wholeDollar(val);
   }
@@ -1564,13 +1577,85 @@ function renderBudget(){
 function renderBudgetAccounts(){
   const wk = currentWeekKeyForToday();
   const w = ensureWeek(wk);
-  const html = ACCOUNTS.map(a => `
-    <div class="bal-input-row">
-      <span>${a.name}${a.debt?' <span class="faint" style="font-weight:400;">(debt)</span>':''}</span>
-      <span class="dollar-field"><input type="number" step="1" inputmode="numeric" data-field-key="acct:${a.id}" value="${w[a.id]!==null?w[a.id]:''}" placeholder="—" onclick="this.select()" onchange="onGridBalance('${wk}','${a.id}', this.value)"></span>
+  const html = state.accountDefs.map(a => `
+    <div class="budget-cat">
+      <div class="budget-cat-top">
+        ${renderAccountTitleField(a.id, a.name)}
+        <button class="del-btn" tabindex="-1" onclick="removeAccount('${a.id}')" aria-label="Remove account">&times;</button>
+      </div>
+      <div class="budget-cat-controls">
+        <label class="bc-toggle" title="Debt account — balance is always kept negative (money owed)">
+          <input type="checkbox" data-field-key="debt:${a.id}" ${a.debt?'checked':''} onchange="toggleAccountDebt('${a.id}', this.checked)">
+          Debt
+        </label>
+        <span class="dollar-field"><input type="number" step="1" inputmode="numeric" data-field-key="acct:${a.id}" value="${w[a.id]!==null?w[a.id]:''}" placeholder="—" onclick="this.select()" onchange="onGridBalance('${wk}','${a.id}', this.value)"></span>
+      </div>
     </div>
-  `).join('') + `<div class="faint" style="font-size:.7rem; margin-top:6px;">Setting the balance for the week of ${formatDateShort(parseKey(wk))}. Credit cards and other debts: just enter what you owe — it's automatically treated as negative.</div>`;
+  `).join('') + `<button class="add-btn" onclick="addAccount()">+ Add account</button>
+    <div class="faint" style="font-size:.7rem; margin-top:10px;">Setting the balance for the week of ${formatDateShort(parseKey(wk))}. Debt accounts (credit cards, etc.): just enter what you owe — it's automatically treated as negative.</div>`;
   document.getElementById('budget-accounts').innerHTML = html;
+}
+
+function addAccount(){
+  const id = 'acct_' + Date.now();
+  state.accountDefs.push({ id, name:'New account', debt:false });
+  if(state.accounts[id]===undefined) state.accounts[id] = 0;
+  saveState();
+  renderBudget();
+}
+function removeAccount(id){
+  if(state.accountDefs.length <= 1){ showToast('Keep at least one account.'); return; }
+  state.accountDefs = state.accountDefs.filter(a=>a.id!==id);
+  saveState();
+  renderBudget();
+}
+function renameAccount(id, name){
+  const a = state.accountDefs.find(a=>a.id===id);
+  if(a){ a.name = name; saveState(); }
+}
+function toggleAccountDebt(id, debt){
+  const a = state.accountDefs.find(a=>a.id===id);
+  if(!a) return;
+  a.debt = debt;
+  if(debt){
+    // Force any already-entered balance negative immediately, same as the
+    // one-time v5 migration did for the original built-in debt accounts.
+    state.accounts[id] = -Math.abs(Number(state.accounts[id])||0);
+    for(const key in state.weeks){
+      const w = state.weeks[key];
+      if(w[id]!==null && w[id]!==undefined) w[id] = -Math.abs(Number(w[id])||0);
+    }
+  }
+  saveState();
+  deferRenderAll();
+}
+
+// Account titles use the same locked-until-double-clicked pattern as
+// category titles, kept in a separate unlock set since account ids and
+// category ids aren't guaranteed to be distinct namespaces.
+const unlockedAccountTitles = new Set();
+function renderAccountTitleField(id, name){
+  if(unlockedAccountTitles.has(id)){
+    return `<input type="text" class="title-input" data-title-input="acct:${id}" data-field-key="accttitle:${id}" value="${escapeHTML(name)}" onblur="lockAccountTitle('${id}', this.value)" onkeydown="if(event.key==='Enter') this.blur()">`;
+  }
+  return `<span class="title-locked" ondblclick="unlockAccountTitle('${id}')" title="Double-click to rename">
+    <span class="title-locked-text">${escapeHTML(name)}</span>
+    <button type="button" class="title-edit-btn" tabindex="-1" onclick="unlockAccountTitle('${id}')" aria-label="Rename">&#9998;</button>
+  </span>`;
+}
+function unlockAccountTitle(id){
+  unlockedAccountTitles.add(id);
+  renderBudget();
+  requestAnimationFrame(()=>{
+    const el = document.querySelector(`[data-title-input="acct:${id}"]`);
+    if(el){ el.focus(); el.select(); }
+  });
+}
+function lockAccountTitle(id, value){
+  const trimmed = value.trim();
+  if(trimmed !== '') renameAccount(id, trimmed);
+  unlockedAccountTitles.delete(id);
+  deferRenderAll();
 }
 
 function renderBudgetRows(kind){
@@ -1769,7 +1854,7 @@ function removeCategory(kind, id){
 function modalDomId(accountId){ return 'modal-'+accountId.toLowerCase(); }
 
 function openBalanceModal(){
-  document.getElementById('modal-account-fields').innerHTML = ACCOUNTS.map(a => `
+  document.getElementById('modal-account-fields').innerHTML = state.accountDefs.map(a => `
     <div class="field">
       <label>${a.name}</label>
       <span class="dollar-field"><input type="number" step="1" inputmode="numeric" id="${modalDomId(a.id)}" value="${state.accounts[a.id]||0}"></span>
@@ -1783,7 +1868,7 @@ function closeBalanceModal(){
 function saveBalanceModal(){
   const wk = toKey(nearestFriday(new Date()));
   const w = ensureWeek(wk);
-  for(const a of ACCOUNTS){
+  for(const a of state.accountDefs){
     const val = normalizeAccountValue(a.id, wholeDollar(document.getElementById(modalDomId(a.id)).value));
     state.accounts[a.id] = val;
     w[a.id] = val;

@@ -47,7 +47,7 @@ Every income and expense line has a checkbox next to it, in both the Weekly view
 ### Accounts vs. Categories
 There are two separate things being tracked:
 - **Categories** (Income/Expense) — the money flowing in and out each week.
-- **Accounts** — your actual balances: **Checking, Savings, Other Bank, Credit Card 1, Credit Card 2, Other**. These are updated whenever you check your real bank/card balances, not every week necessarily. Credit Card 1/2 and Other are debt accounts — just type what you owe as a plain number (e.g. `450`); the app always treats them as negative automatically, so you never need to type a minus sign.
+- **Accounts** — your actual balances. Out of the box there are six: **Checking, Savings, Other Bank, Credit Card 1, Credit Card 2, Other**, but the list is fully yours to edit in the Budget tab — rename any of them, add new ones (a second savings account, a loan, another card), or remove ones you don't use. These are updated whenever you check your real bank/card balances, not every week necessarily. Any account marked **Debt** is treated as money owed — just type what you owe as a plain number (e.g. `450`); the app always makes it negative automatically, so you never need to type a minus sign.
 
 ### Due day
 Any category (income or expense) can have an optional **Due day** (1–31) — a reference reminder for when it actually lands in real life, independent of which Friday it's budgeted under. It shows as a small badge next to the category name, and on the Monthly calendar it appears on that specific day of the month.
@@ -88,7 +88,7 @@ The most detailed view, in two parts.
 A full month grid. Every day can show items due that day:
 - **Individual days** show each due item's amount **separately**, small and un-added (e.g. two bills due the same day show as two small numbers, not one combined total). Hover or tap the day to see the full list plus its total in a tooltip.
 - **Fridays** show your whole week's total, genuinely added up, marked with **Σ** so it's unmistakably a sum rather than an individual item.
-- An **amber dot** on a Friday means that week has an unpaid expense. A **blue dot** means something is also specifically due that exact day.
+- An **amber dot** on a Friday means that week has an unpaid expense. A **green dot** means something is also specifically due that exact day.
 - Tap any day to jump straight down to that week in the spreadsheet below.
 - Tap the **ⓘ** icon in the corner of the calendar card for a built-in explanation of all of the above.
 
@@ -96,7 +96,7 @@ A full month grid. Every day can show items due that day:
 A grid: categories down the side, the month's Fridays across the top, grouped under **Income** and **Expenses** (with expense sub-groups), ending in **Net Total** and **Running Balance** rows.
 - Check items off directly in the grid, same as the Weekly tab.
 - Amber cells are unpaid expenses that need attention.
-- A blue-outlined cell with a ↺ button means that week's amount was manually changed from the recurring plan — tap ↺ to revert it.
+- A green-outlined cell with a ↺ button means that week's amount was manually changed from the recurring plan — tap ↺ to revert it.
 
 Above the grid, a summary card shows Starting balance, Estimated ending balance, Actual balance, and Variance for the month, with its own explanation underneath.
 
@@ -104,7 +104,7 @@ Above the grid, a summary card shows Starting balance, Estimated ending balance,
 
 Where everything is configured.
 
-- **Accounts** — quick-entry boxes for Checking, Savings, Other Bank, and your debt accounts, always for the current week.
+- **Accounts** — quick-entry boxes for each account, always for the current week. **Double-click** an account's name (or tap the pencil icon) to rename it, tap **+ Add account** to create a new one, toggle **Debt** if it's a balance owed (a card, a loan), and use the **×** button to remove one you don't need.
 - **Income Categories** and **Expense Categories** — add, rename, delete, and configure every category:
   - **Recurring** toggle
   - **$ amount**
@@ -128,7 +128,7 @@ Go to Budget. The app ships with a starter set of common categories (Paycheck 1/
 4. Optionally set a **Due day** and a **Group** for expenses.
 
 **Step 2 — Enter your starting balances (Budget tab, Accounts section, or the Update Balances button on Home).**
-Type in what's actually in your Checking, Savings, Other Bank, and — if you carry balances — Credit Card 1/2 and Other (just the amount you owe; no minus sign needed).
+The starter accounts are Checking, Savings, Other Bank, Credit Card 1/2, and Other — rename, add, or remove them first if your real accounts don't match. Type in what's actually in each one; for anything marked **Debt** just enter the amount you owe (no minus sign needed).
 
 **Step 3 — Check the Monthly spreadsheet and calendar.**
 With categories and their schedules set, the whole month should already be populated with planned amounts. Skim it to make sure the numbers and timing look right — this is your budget forecast before anything has actually happened yet.
@@ -161,3 +161,4 @@ There is no automatic cloud sync. Export regularly if the data matters to you.
 - Pressing Tab moves between fields in order, the same as any form.
 - The app works fully offline once the page has loaded once.
 - It's a single HTML file with no external dependencies, so it's easy to host anywhere (a static file host, a USB drive, a local folder) or wrap in a lightweight mobile app shell later.
+- The dark, green color theme is fixed — it always looks the same regardless of a device's light/dark system setting, so it looks identical on every computer it's installed on.

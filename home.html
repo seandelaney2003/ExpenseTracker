@@ -3,33 +3,25 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<meta name="theme-color" content="#0f172a">
+<meta name="theme-color" content="#0b1512">
 <title>Expense Tracker — Know your money, every Friday</title>
 <style>
+/* One fixed palette, always — not tied to the OS light/dark setting, so it
+   looks identical on every machine it's installed on. Money app, so green
+   is the through-line: the accent (buttons, links, highlights) and positive
+   amounts both live in the green family, at different brightness so they
+   stay visually distinct from each other. */
 :root{
-  --bg:#f4f5f7; --bg-elev:#ffffff; --bg-sunken:#eceef2;
-  --text:#14171f; --text-dim:#5b6472; --text-faint:#8a92a1;
-  --border:#e2e5ea;
-  --accent:#2563eb; --accent-text:#ffffff;
-  --pos:#0f9d58; --pos-bg:#e6f6ec;
-  --neg:#d93025; --neg-bg:#fdeceb;
-  --warn:#b7791f; --warn-bg:#fdf3e2;
-  --income:#0f9d58; --expense:#d93025;
-  --shadow: 0 1px 2px rgba(16,24,40,.06), 0 1px 3px rgba(16,24,40,.08);
+  --bg:#0b1512; --bg-elev:#132019; --bg-sunken:#0a100c;
+  --text:#eaf2ec; --text-dim:#9db3a6; --text-faint:#67857a;
+  --border:#1f3226;
+  --accent:#22c55e; --accent-text:#062b14;
+  --pos:#4ade80; --pos-bg:#123423;
+  --neg:#ff6b6b; --neg-bg:#2c1414;
+  --warn:#f0b649; --warn-bg:#2a2110;
+  --income:#4ade80; --expense:#ff6b6b;
+  --shadow: 0 1px 2px rgba(0,0,0,.4), 0 2px 6px rgba(0,0,0,.35);
   --radius: 14px;
-}
-@media (prefers-color-scheme: dark){
-  :root{
-    --bg:#0d1117; --bg-elev:#161b22; --bg-sunken:#0a0d12;
-    --text:#e6e9ef; --text-dim:#9aa4b2; --text-faint:#6b7484;
-    --border:#262c37;
-    --accent:#5b9dff; --accent-text:#0a0d12;
-    --pos:#3ddc84; --pos-bg:#0f2b1c;
-    --neg:#ff6b6b; --neg-bg:#2c1414;
-    --warn:#f0b649; --warn-bg:#2a2110;
-    --income:#3ddc84; --expense:#ff6b6b;
-    --shadow: 0 1px 2px rgba(0,0,0,.4), 0 2px 6px rgba(0,0,0,.35);
-  }
 }
 *{box-sizing:border-box;}
 html,body{margin:0; padding:0;}
@@ -50,7 +42,15 @@ header.site{
   position:sticky; top:0; z-index:20; background:var(--bg); border-bottom:1px solid var(--border);
 }
 header.site .wrap{display:flex; align-items:center; justify-content:space-between; padding-top:14px; padding-bottom:14px;}
-.brand{font-weight:800; font-size:1.05rem; letter-spacing:.2px;}
+.brand{display:flex; align-items:center; gap:9px; font-weight:800; font-size:1.05rem; letter-spacing:.2px;}
+.logomark{
+  width:26px; height:26px; border-radius:8px; flex:none;
+  background:linear-gradient(160deg, var(--accent), #16994a);
+  color:var(--accent-text); font-weight:800; font-size:.92rem;
+  display:flex; align-items:center; justify-content:center;
+  box-shadow:0 1px 3px rgba(0,0,0,.35);
+}
+.logomark.lg{width:56px; height:56px; border-radius:16px; font-size:1.9rem;}
 .btn{
   display:inline-flex; align-items:center; gap:6px; border-radius:10px; font-weight:700; cursor:pointer;
   text-decoration:none; border:none; font-family:inherit;
@@ -161,7 +161,7 @@ footer{padding:32px 0 48px; text-align:center; color:var(--text-faint); font-siz
 
 <header class="site">
   <div class="wrap">
-    <div class="brand">Expense Tracker</div>
+    <div class="brand"><span class="logomark" aria-hidden="true">$</span> Expense Tracker</div>
     <a class="btn btn-primary" href="index.html">Open the Tracker →</a>
   </div>
 </header>
