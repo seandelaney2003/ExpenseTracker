@@ -681,6 +681,17 @@ function freshState(){
 
 let state = loadState();
 
+// Never silently drop data we couldn't make sense of — stash the raw string
+// under a separate key (so it survives even if the app goes on to save a
+// fresh, empty state under the normal key) and tell the user plainly,
+// instead of quietly showing a blank dashboard as if nothing happened.
+function recoverFromUnreadableState(raw, message){
+  try{ localStorage.setItem(STORAGE_KEY + '.recovery-' + Date.now(), raw); }catch(e){}
+  console.error('State failed to load:', message);
+  setTimeout(() => alert(message), 0);
+  return freshState();
+}
+
 function loadState(){
   try{
     const raw = localStorage.getItem(STORAGE_KEY);
@@ -689,8 +700,15 @@ function loadState(){
     // Budget existed — they've already started, so suppress it for them
     // instead of it popping up on someone's tenth week of using the app.
     localStorage.setItem(BUDGET_BADGE_SEEN_KEY, '1');
-    const parsed = JSON.parse(raw);
-    if(!parsed.categories || !parsed.weeks || !parsed.months || !parsed.accounts) return freshState();
+    let parsed;
+    try{
+      parsed = JSON.parse(raw);
+    }catch(parseErr){
+      return recoverFromUnreadableState(raw, 'Your saved data could not be read (it may have been corrupted). A backup copy has been kept — use Budget → Import backup to restore, or contact support. Nothing has been erased.');
+    }
+    if(!parsed.categories || !parsed.weeks || !parsed.months || !parsed.accounts){
+      return recoverFromUnreadableState(raw, 'Your saved data looked incomplete when the app opened. A backup copy has been kept — use Budget → Import backup to restore, or contact support. Nothing has been erased.');
+    }
     return ensureBaselineCategories(migrateState(parsed));
   }catch(e){
     console.error('Failed to load state, starting fresh.', e);
