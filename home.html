@@ -97,12 +97,7 @@ header.site .wrap{display:flex; align-items:center; justify-content:space-betwee
 .step h3{margin:0 0 8px; font-size:1.02rem;}
 .step p{margin:0; color:var(--text-dim); font-size:.88rem;}
 
-/* ---------- Visual demo (calendar + spreadsheet) ---------- */
-.demo-grid{display:grid; grid-template-columns:1fr 1fr; gap:24px; align-items:start;}
-.demo-card{background:var(--bg-elev); border:1px solid var(--border); border-radius:var(--radius); padding:18px; box-shadow:var(--shadow);}
-.demo-card h4{margin:0 0 4px; font-size:.9rem;}
-.demo-card .demo-sub{font-size:.76rem; color:var(--text-faint); margin:0 0 14px;}
-
+/* ---------- Visual demo (calendar mini-mockup, reused by the tour) ---------- */
 .mini-cal-hdr{display:grid; grid-template-columns:repeat(7,1fr); gap:4px; font-size:.6rem; color:var(--text-faint); text-align:center; margin-bottom:6px; text-transform:uppercase;}
 .mini-cal{display:grid; grid-template-columns:repeat(7,1fr); gap:4px;}
 .mini-day{
@@ -123,10 +118,85 @@ header.site .wrap{display:flex; align-items:center; justify-content:space-betwee
 .mini-sheet th:first-child, .mini-sheet td:first-child{text-align:left;}
 .mini-sheet td{padding:5px; text-align:right; border-bottom:1px solid var(--border);}
 .mini-sheet tr.grp td{font-weight:700; background:var(--bg-sunken); color:var(--text-dim); font-size:.58rem; text-transform:uppercase; text-align:left;}
-.mini-check{display:inline-block; width:10px; height:10px; border-radius:3px; border:1.3px solid var(--border); vertical-align:middle; margin-right:4px;}
-.mini-check.on{background:var(--pos); border-color:var(--pos);}
-td.paid{background:var(--pos-bg); color:var(--pos); font-weight:600;}
-td.unpaid{background:var(--warn-bg); color:var(--warn); font-weight:700;}
+/* ---------- Product tour (animated, no video file needed) ---------- */
+.tour{display:grid; grid-template-columns:1fr 1.2fr; gap:26px; align-items:center;}
+.tour-tabs{display:flex; flex-direction:column; gap:8px;}
+.tour-tab{
+  display:flex; align-items:flex-start; gap:12px; text-align:left; width:100%;
+  background:none; border:none; border-left:3px solid var(--border); border-radius:0 10px 10px 0;
+  padding:12px 12px 12px 14px; cursor:pointer; color:var(--text-dim); font-family:inherit;
+}
+.tour-tab:hover{background:var(--bg-sunken);}
+.tour-tab.active{background:var(--bg-elev); color:var(--text); border-left-color:var(--accent);}
+.tour-tab-num{
+  width:24px; height:24px; border-radius:50%; background:var(--bg-sunken); color:var(--text-faint);
+  display:flex; align-items:center; justify-content:center; font-weight:800; font-size:.76rem; flex:none; margin-top:1px;
+}
+.tour-tab.active .tour-tab-num{background:var(--accent); color:var(--accent-text);}
+.tour-tab-body{flex:1; min-width:0;}
+.tour-tab-label{display:block; font-weight:700; font-size:.88rem; margin-bottom:3px;}
+.tour-tab-desc{display:block; font-size:.76rem; color:var(--text-faint); line-height:1.4;}
+.tour-tab.active .tour-tab-desc{color:var(--text-dim);}
+.tour-progress{display:block; height:3px; border-radius:2px; background:var(--border); margin-top:9px; overflow:hidden;}
+.tour-progress-fill{display:block; height:100%; width:0%; background:var(--accent); border-radius:2px;}
+.tour-tab.active .tour-progress-fill{animation:tourFill 4.2s linear forwards;}
+@keyframes tourFill{from{width:0%;} to{width:100%;}}
+
+.tour-frame{
+  background:var(--bg-elev); border:1px solid var(--border); border-radius:var(--radius);
+  padding:20px; box-shadow:var(--shadow); min-height:260px; display:flex; align-items:center;
+}
+.tour-screen{display:none; width:100%;}
+.tour-screen.active{display:block;}
+.tour-screen-title{font-size:.68rem; font-weight:700; text-transform:uppercase; letter-spacing:.4px; color:var(--text-faint); margin-bottom:10px;}
+.tour-screen-note{font-size:.72rem; color:var(--text-faint); line-height:1.4; margin:-4px 0 12px;}
+
+@keyframes tourRowIn{from{opacity:0; transform:translateY(6px);} to{opacity:1; transform:translateY(0);}}
+
+/* Step 1 — budget list */
+.tour-list{display:flex; flex-direction:column;}
+.tour-row{
+  display:flex; align-items:center; justify-content:space-between; gap:10px;
+  padding:9px 2px; border-bottom:1px solid var(--border); font-size:.82rem; opacity:0;
+}
+.tour-row:last-child{border-bottom:none;}
+.tour-screen.active .tour-row{animation:tourRowIn .35s ease forwards; animation-delay:calc(var(--i,0) * .12s + .05s);}
+.tour-row-name{flex:1; font-weight:600; color:var(--text);}
+.tour-row-freq{font-size:.66rem; color:var(--text-faint); background:var(--bg-sunken); padding:3px 8px; border-radius:999px; flex:none;}
+.tour-row-amt{font-weight:700; font-variant-numeric:tabular-nums; flex:none; width:64px; text-align:right;}
+
+/* Step 2 — checklist (reuses .mini-sheet look) */
+.mini-check-fx{
+  display:inline-block; width:10px; height:10px; border-radius:3px; border:1.3px solid var(--border);
+  vertical-align:middle; margin-right:4px;
+}
+.tour-screen.active .mini-check-fx{animation:mcOn .01s steps(1) forwards; animation-delay:calc(var(--i,0) * .4s + .6s);}
+@keyframes mcOn{to{background:var(--pos); border-color:var(--pos);}}
+.mini-amt-fx{padding:2px 5px; border-radius:5px;}
+.tour-screen.active .mini-amt-fx{animation:mcAmtOn .01s steps(1) forwards; animation-delay:calc(var(--i,0) * .4s + .6s);}
+@keyframes mcAmtOn{to{background:var(--pos-bg); color:var(--pos); font-weight:700;}}
+.tour-snapshot{margin-top:12px; padding-top:10px; border-top:1px dashed var(--border); opacity:0;}
+.tour-screen.active .tour-snapshot{animation:tourRowIn .4s ease forwards; animation-delay:1.6s;}
+.tour-snapshot-label{font-size:.62rem; font-weight:700; text-transform:uppercase; letter-spacing:.4px; color:var(--text-faint); margin-bottom:6px;}
+.tour-snapshot-row{display:flex; justify-content:space-between; font-size:.78rem; padding:3px 0;}
+.tour-snapshot-row .num{font-weight:700; font-variant-numeric:tabular-nums;}
+
+/* Step 3 — calendar (reuses .mini-cal) */
+@keyframes tourCalPulse{0%{box-shadow:0 0 0 0 rgba(34,197,94,.55);} 70%{box-shadow:0 0 0 7px rgba(34,197,94,0);} 100%{box-shadow:0 0 0 0 rgba(34,197,94,0);}}
+.tour-screen.active .mini-day.fri.warn, .tour-screen.active .mini-day.fri.due{animation:tourCalPulse 1.1s ease 1; animation-delay:.35s;}
+
+/* Step 4 — dashboard summary, numbers count up via JS */
+.tour-dash{display:flex; flex-direction:column;}
+.tour-dash-line{
+  display:flex; align-items:baseline; justify-content:space-between; gap:10px;
+  padding:9px 2px; border-bottom:1px solid var(--border); font-size:.84rem; opacity:0;
+}
+.tour-dash-line:last-child{border-bottom:none; padding-top:13px;}
+.tour-dash-line.total{font-weight:800; font-size:.98rem; color:var(--text);}
+.tour-screen.active .tour-dash-line{animation:tourRowIn .35s ease forwards; animation-delay:calc(var(--i,0) * .12s + .05s);}
+.tour-dash-label{color:var(--text-dim);}
+.tour-dash-line.total .tour-dash-label{color:var(--text);}
+.tour-num{font-variant-numeric:tabular-nums; font-weight:700;}
 
 /* ---------- Features ---------- */
 .feature-grid{display:grid; grid-template-columns:repeat(3,1fr); gap:18px;}
@@ -148,8 +218,9 @@ footer{padding:32px 0 48px; text-align:center; color:var(--text-faint); font-siz
   .hero .wrap{grid-template-columns:1fr;}
   .hero h1{font-size:1.9rem;}
   .steps{grid-template-columns:1fr;}
-  .demo-grid{grid-template-columns:1fr;}
   .feature-grid{grid-template-columns:1fr 1fr;}
+  .tour{grid-template-columns:1fr;}
+  .tour-frame{order:-1;}
 }
 @media (max-width:520px){
   .feature-grid{grid-template-columns:1fr;}
@@ -214,53 +285,117 @@ footer{padding:32px 0 48px; text-align:center; color:var(--text-faint); font-siz
   </div>
 </section>
 
-<section class="section">
+<section class="section" id="tour">
   <div class="wrap">
-    <h2>A calendar and spreadsheet that speak your bank's language</h2>
-    <p class="sub">Every day shows what's actually due that day. Every Friday shows the real total for the week. You always know which number is which.</p>
-    <div class="demo-grid">
-      <div class="demo-card">
-        <h4>Monthly calendar</h4>
-        <p class="demo-sub">Individual bills shown on the day they're due — Fridays show the week's added‑up total, marked with Σ.</p>
-        <div class="mini-cal-hdr"><span>S</span><span>M</span><span>T</span><span>W</span><span>T</span><span>F</span><span>S</span></div>
-        <div class="mini-cal">
-          <div class="mini-day blank"></div><div class="mini-day blank"></div>
-          <div class="mini-day"><div class="n">1</div><div class="item neg">-$1,800</div></div>
-          <div class="mini-day"><div class="n">2</div></div>
-          <div class="mini-day"><div class="n">3</div></div>
-          <div class="mini-day fri warn"><div class="n">4</div><div class="sum pos">&Sigma;$212</div></div>
-          <div class="mini-day"><div class="n">5</div></div>
-          <div class="mini-day"><div class="n">6</div></div>
-          <div class="mini-day"><div class="n">7</div></div>
-          <div class="mini-day"><div class="n">8</div></div>
-          <div class="mini-day"><div class="n">9</div></div>
-          <div class="mini-day"><div class="n">10</div></div>
-          <div class="mini-day fri due"><div class="n">11</div><div class="sum pos">&Sigma;$1,340</div></div>
-          <div class="mini-day"><div class="n">12</div></div>
-          <div class="mini-day"><div class="n">13</div></div>
-          <div class="mini-day"><div class="n">14</div></div>
-          <div class="mini-day"><div class="n">15</div><div class="item pos">$3,000</div><div class="item neg">-$120</div></div>
-          <div class="mini-day"><div class="n">16</div></div>
-          <div class="mini-day"><div class="n">17</div></div>
-          <div class="mini-day fri"><div class="n">18</div><div class="sum neg">&Sigma;-$80</div></div>
-          <div class="mini-day"><div class="n">19</div></div>
-          <div class="mini-day"><div class="n">20</div></div>
-        </div>
+    <h2>See it in action</h2>
+    <p class="sub">No video required — this is the actual app, walking through a real week. Click a step, or just let it play.</p>
+    <div class="tour">
+      <div class="tour-tabs">
+        <button class="tour-tab active" data-step="1" onclick="tourGoTo(1)">
+          <span class="tour-tab-num">1</span>
+          <span class="tour-tab-body">
+            <span class="tour-tab-label">Budget — set it up once</span>
+            <span class="tour-tab-desc">Add each paycheck and bill, set how often it repeats — weekly to yearly — with an optional due-day reminder. The app builds your whole forecast from this.</span>
+            <span class="tour-progress"><span class="tour-progress-fill"></span></span>
+          </span>
+        </button>
+        <button class="tour-tab" data-step="2" onclick="tourGoTo(2)">
+          <span class="tour-tab-num">2</span>
+          <span class="tour-tab-body">
+            <span class="tour-tab-label">Weekly — check things off</span>
+            <span class="tour-tab-desc">Your routine, one week at a time: check an item off as it happens, correct the amount if it's different, and update your real bank balance right here — it feeds Home and Monthly automatically.</span>
+            <span class="tour-progress"><span class="tour-progress-fill"></span></span>
+          </span>
+        </button>
+        <button class="tour-tab" data-step="3" onclick="tourGoTo(3)">
+          <span class="tour-tab-num">3</span>
+          <span class="tour-tab-body">
+            <span class="tour-tab-label">Monthly — calendar &amp; spreadsheet</span>
+            <span class="tour-tab-desc">Bills show on the day they're due; Fridays show the whole week's total. Tap any day to jump straight to that week in the spreadsheet below and check things off there too.</span>
+            <span class="tour-progress"><span class="tour-progress-fill"></span></span>
+          </span>
+        </button>
+        <button class="tour-tab" data-step="4" onclick="tourGoTo(4)">
+          <span class="tour-tab-num">4</span>
+          <span class="tour-tab-body">
+            <span class="tour-tab-label">Home — your real forecast</span>
+            <span class="tour-tab-desc">What's left to collect, what's left to pay, and where your balance is projected to land this month and beyond — no math required.</span>
+            <span class="tour-progress"><span class="tour-progress-fill"></span></span>
+          </span>
+        </button>
       </div>
-      <div class="demo-card">
-        <h4>Spreadsheet view</h4>
-        <p class="demo-sub">Check things off right in the grid — unpaid items are flagged until you do.</p>
-        <table class="mini-sheet">
-          <thead><tr><th>Category</th><th>9/4</th><th>9/11</th><th>9/18</th></tr></thead>
-          <tbody>
-            <tr class="grp"><td colspan="4">Income</td></tr>
-            <tr><td><span class="mini-check on"></span>Paycheck 1</td><td class="paid">$3,000</td><td>—</td><td>—</td></tr>
-            <tr class="grp"><td colspan="4">Expenses</td></tr>
-            <tr><td><span class="mini-check on"></span>Mortgage</td><td class="paid">$1,800</td><td>—</td><td>—</td></tr>
-            <tr><td><span class="mini-check"></span>Electric</td><td class="unpaid">$120</td><td>—</td><td>—</td></tr>
-            <tr><td><span class="mini-check"></span>Streaming</td><td>—</td><td class="unpaid">$18</td><td>—</td></tr>
-          </tbody>
-        </table>
+
+      <div class="tour-frame">
+        <div class="tour-screen active" data-step="1">
+          <div class="tour-screen-title">Budget — Expense Categories</div>
+          <p class="tour-screen-note">Accounts (Checking, Savings, cards) live here too — add, rename, or remove them to match your real banks.</p>
+          <div class="tour-list">
+            <div class="tour-row" style="--i:0"><span class="tour-row-name">Paycheck 1</span><span class="tour-row-freq">Biweekly</span><span class="tour-row-amt pos">$3,000</span></div>
+            <div class="tour-row" style="--i:1"><span class="tour-row-name">Mortgage</span><span class="tour-row-freq">Monthly</span><span class="tour-row-amt neg">-$1,800</span></div>
+            <div class="tour-row" style="--i:2"><span class="tour-row-name">Electric</span><span class="tour-row-freq">Monthly</span><span class="tour-row-amt neg">-$120</span></div>
+            <div class="tour-row" style="--i:3"><span class="tour-row-name">Streaming</span><span class="tour-row-freq">Monthly</span><span class="tour-row-amt neg">-$18</span></div>
+          </div>
+        </div>
+
+        <div class="tour-screen" data-step="2">
+          <div class="tour-screen-title">Weekly — Fri 9/4</div>
+          <p class="tour-screen-note">One week at a time — this is the screen you'll actually live in most weeks.</p>
+          <table class="mini-sheet">
+            <thead><tr><th>Category</th><th>Plan</th><th>Actual</th></tr></thead>
+            <tbody>
+              <tr style="--i:0"><td><span class="mini-check-fx"></span>Paycheck 1</td><td>$3,000</td><td class="mini-amt-fx pos">$3,000</td></tr>
+              <tr style="--i:1"><td><span class="mini-check-fx"></span>Mortgage</td><td>-$1,800</td><td class="mini-amt-fx neg">-$1,800</td></tr>
+              <tr style="--i:2"><td><span class="mini-check-fx"></span>Electric</td><td>-$120</td><td class="mini-amt-fx neg">-$120</td></tr>
+            </tbody>
+          </table>
+          <div class="tour-snapshot">
+            <div class="tour-snapshot-label">Account Balance Snapshot</div>
+            <div class="tour-snapshot-row"><span>Checking</span><span class="num">$11,747</span></div>
+            <div class="tour-snapshot-row"><span>Savings</span><span class="num">$34,132</span></div>
+            <div class="tour-screen-note" style="margin:6px 0 0;">Update your real balances here — the same numbers show up on Home and Monthly, no re-entering.</div>
+          </div>
+        </div>
+
+        <div class="tour-screen" data-step="3">
+          <div class="tour-screen-title">Monthly calendar</div>
+          <p class="tour-screen-note">Amber means unpaid, the accent dot means something's due that day — glance once, know exactly what needs attention.</p>
+          <div class="mini-cal-hdr"><span>S</span><span>M</span><span>T</span><span>W</span><span>T</span><span>F</span><span>S</span></div>
+          <div class="mini-cal">
+            <div class="mini-day blank"></div><div class="mini-day blank"></div>
+            <div class="mini-day"><div class="n">1</div><div class="item neg">-$1,800</div></div>
+            <div class="mini-day"><div class="n">2</div></div>
+            <div class="mini-day"><div class="n">3</div></div>
+            <div class="mini-day fri warn"><div class="n">4</div><div class="sum pos">&Sigma;$212</div></div>
+            <div class="mini-day"><div class="n">5</div></div>
+            <div class="mini-day"><div class="n">6</div></div>
+            <div class="mini-day"><div class="n">7</div></div>
+            <div class="mini-day"><div class="n">8</div></div>
+            <div class="mini-day"><div class="n">9</div></div>
+            <div class="mini-day"><div class="n">10</div></div>
+            <div class="mini-day fri due"><div class="n">11</div><div class="sum pos">&Sigma;$1,340</div></div>
+            <div class="mini-day"><div class="n">12</div></div>
+            <div class="mini-day"><div class="n">13</div></div>
+            <div class="mini-day"><div class="n">14</div></div>
+            <div class="mini-day"><div class="n">15</div><div class="item pos">$3,000</div><div class="item neg">-$120</div></div>
+            <div class="mini-day"><div class="n">16</div></div>
+            <div class="mini-day"><div class="n">17</div></div>
+            <div class="mini-day fri"><div class="n">18</div><div class="sum neg">&Sigma;-$80</div></div>
+            <div class="mini-day"><div class="n">19</div></div>
+            <div class="mini-day"><div class="n">20</div></div>
+          </div>
+        </div>
+
+        <div class="tour-screen" data-step="4">
+          <div class="tour-screen-title">Home — This Month</div>
+          <p class="tour-screen-note">Home also shows Projected Balances for the months ahead, built from each bill's own schedule.</p>
+          <div class="tour-dash">
+            <div class="tour-dash-line" style="--i:0"><span class="tour-dash-label">Starting balance (today)</span><span class="tour-num" data-target="46000" data-sign="">$0</span></div>
+            <div class="tour-dash-line" style="--i:1"><span class="tour-dash-label">Income left to collect</span><span class="tour-num pos" data-target="1340" data-sign="plus">+$0</span></div>
+            <div class="tour-dash-line" style="--i:2"><span class="tour-dash-label">Expenses unpaid</span><span class="tour-num neg" data-target="212" data-sign="minus">-$0</span></div>
+            <div class="tour-dash-line" style="--i:3"><span class="tour-dash-label">Expenses paid</span><span class="tour-num neg" data-target="1920" data-sign="minus">-$0</span></div>
+            <div class="tour-dash-line total" style="--i:4"><span class="tour-dash-label">After bills paid</span><span class="tour-num" data-target="45208" data-sign="">$0</span></div>
+          </div>
+        </div>
       </div>
     </div>
   </div>
@@ -294,6 +429,40 @@ footer{padding:32px 0 48px; text-align:center; color:var(--text-faint); font-siz
 <footer>
   <div class="wrap">Your data stays on your device — nothing is uploaded, ever.</div>
 </footer>
+
+<script>
+// A self-playing 4-step "tour" standing in for a product video — cycles
+// through mock screens of the actual app, driven entirely by CSS animations
+// that restart automatically each time a step's screen/tab is (re)activated.
+const TOUR_DURATION = 4200;
+let tourTimer = null;
+
+function tourGoTo(step){
+  document.querySelectorAll('#tour .tour-tab').forEach(el => el.classList.toggle('active', Number(el.dataset.step) === step));
+  document.querySelectorAll('#tour .tour-screen').forEach(el => el.classList.toggle('active', Number(el.dataset.step) === step));
+  if(step === 4) tourAnimateNumbers();
+  clearTimeout(tourTimer);
+  tourTimer = setTimeout(() => tourGoTo(step === 4 ? 1 : step + 1), TOUR_DURATION);
+}
+
+function tourAnimateNumbers(){
+  document.querySelectorAll('#tour .tour-num').forEach(el => {
+    const target = Number(el.dataset.target);
+    const sign = el.dataset.sign || '';
+    const prefix = sign === 'minus' ? '-$' : sign === 'plus' ? '+$' : '$';
+    const start = performance.now();
+    const duration = 800;
+    (function frame(now){
+      const p = Math.min(1, (now - start) / duration);
+      const eased = 1 - Math.pow(1 - p, 3);
+      el.textContent = prefix + Math.round(target * eased).toLocaleString('en-US');
+      if(p < 1) requestAnimationFrame(frame);
+    })(start);
+  });
+}
+
+tourGoTo(1);
+</script>
 
 </body>
 </html>
