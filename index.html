@@ -374,9 +374,9 @@ table.mgrid tr.row-balance td{color:var(--accent);}
    Home/Weekly/Monthly are used interchangeably after setup, so they don't
    get one). Dismissed permanently the first time showTab('budget') runs. */
 .tab-badge{
-  position:absolute; top:2px; right:calc(50% - 30px);
+  position:absolute; top:-7px; left:50%; transform:translateX(-50%);
   background:var(--accent); color:var(--accent-text); font-size:.56rem; font-weight:800;
-  padding:2px 6px; border-radius:999px; white-space:nowrap; letter-spacing:.2px;
+  padding:2px 6px; border-radius:999px; white-space:nowrap; letter-spacing:.2px; z-index:1;
   animation:tabBadgePulse 1.8s ease-in-out infinite;
 }
 @keyframes tabBadgePulse{0%,100%{transform:scale(1);} 50%{transform:scale(1.08);}}
