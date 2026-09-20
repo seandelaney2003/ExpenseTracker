@@ -2,7 +2,7 @@
 
 This packages the same tracker (`../index.html`) as an installable Windows/Mac/Linux desktop app, using [Tauri](https://tauri.app). It uses the OS's built-in webview instead of bundling a browser, so installers come out around 5–10MB instead of Electron's 150MB+.
 
-**There is no separate desktop codebase.** The real app is `index.html` at the project root — that's the only file you should ever edit. Every dev/build run here copies it into `src/index.html` automatically (`npm run sync`, wired up as a `pre`-step on both `dev` and `build`), so this folder never drifts out of sync with the web version.
+**There is no separate desktop codebase.** The real app is `index.html` at the project root — that's the only file you should ever edit. Tauri itself runs `npm run sync` automatically before every dev/build (configured as `beforeDevCommand`/`beforeBuildCommand` in `tauri.conf.json`), copying it into `src/index.html`, so this folder never drifts out of sync with the web version and this happens no matter how the build is triggered (locally, or in CI).
 
 ## Prerequisites
 
@@ -35,7 +35,28 @@ Opens the app in a native window with hot-reload disabled (there's no build step
 npm run build
 ```
 
-Produces a native installer for your current OS in `src-tauri/target/release/bundle/` — an `.msi`/`.exe` on Windows, a `.dmg`/`.app` on Mac, an `.AppImage`/`.deb` on Linux. Cross-compiling to a different OS than you're building on isn't supported by Tauri directly — build each platform's installer on that platform (or in CI).
+Produces a native installer for your current OS in `src-tauri/target/release/bundle/` — an `.msi`/`.exe` on Windows, a `.dmg`/`.app` on Mac, an `.AppImage`/`.deb` on Linux. Cross-compiling to a different OS than you're building on isn't supported by Tauri directly — build each platform's installer on that platform (or in CI, below).
+
+## Building via GitHub Actions (recommended)
+
+A workflow at `../.github/workflows/desktop-build.yml` builds installers for **Windows, Mac, and Linux in parallel** on GitHub's own runners. This is the recommended way to build the Windows installer in particular, since some locally-managed Windows machines (e.g. with **Smart App Control** enabled) block the unsigned build tools Rust produces during compilation — GitHub's runners have no such restriction.
+
+To use it:
+1. Push this project to a GitHub repository (see below if you haven't yet).
+2. On GitHub, go to the **Actions** tab → **Build Desktop App** → **Run workflow**.
+3. When it finishes, download the installers from the run's **Artifacts** section (one zip per platform).
+
+It also runs automatically whenever you push a tag like `v1.0.0` — useful once you're cutting real releases.
+
+### First time pushing to GitHub
+
+```
+git remote add origin https://github.com/<your-username>/<your-repo>.git
+git branch -M main
+git push -u origin main
+```
+
+(Create the empty repo on GitHub first — github.com → New repository — then use the URL it gives you above. No need to add a README or license there; this project already has one.)
 
 ## App identity
 

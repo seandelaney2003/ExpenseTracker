@@ -11,7 +11,7 @@ This guide explains how the tool works and how a new user should set it up and u
 - Two self-contained HTML files — open either in any modern browser (desktop or mobile) and it runs. No installation, no login, no build step.
   - **`home.html`** — the introduction/landing page: what the tool is, how it works, and a link into the app.
   - **`index.html`** — the actual tracker. This is the single source of truth for the app's code — every other packaging of it (desktop, mobile) wraps this exact file rather than maintaining a separate copy.
-- **`desktop-app/`** — packages `index.html` as an installable Windows/Mac/Linux desktop app (via Tauri). See `desktop-app/README.md` for build instructions. Not needed to just use the tracker in a browser.
+- **`desktop-app/`** — packages `index.html` as an installable Windows/Mac/Linux desktop app (via Tauri). Not needed to just use the tracker in a browser. See `desktop-app/README.md` for build instructions — installers can be built locally, or via the included GitHub Actions workflow (recommended, and required on Windows machines with Smart App Control enabled, which blocks local Rust builds).
 - All data is stored locally in the browser's `localStorage`. Nothing is sent anywhere. Data does not sync between devices or browsers automatically (see [Backing up and moving your data](#8-backing-up-and-moving-your-data)).
 - Built around a simple idea: **every week ends on a Friday.** All income and expenses are organized into these Friday-ending weeks, which roll up into months.
 - Four tabs in the app, reached from the bottom navigation bar: **Home**, **Weekly**, **Monthly**, **Budget**.
