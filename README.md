@@ -12,13 +12,50 @@ This guide explains how the tool works and how a new user should set it up and u
   - **`home.html`** — the introduction/landing page: what the tool is, how it works, and a link into the app.
   - **`index.html`** — the actual tracker. This is the single source of truth for the app's code — every other packaging of it (desktop, mobile) wraps this exact file rather than maintaining a separate copy.
 - **`desktop-app/`** — packages `index.html` as an installable Windows/Mac/Linux desktop app (via Tauri). Not needed to just use the tracker in a browser. See `desktop-app/README.md` for build instructions — installers can be built locally, or via the included GitHub Actions workflow (recommended, and required on Windows machines with Smart App Control enabled, which blocks local Rust builds).
-- All data is stored locally in the browser's `localStorage`. Nothing is sent anywhere. Data does not sync between devices or browsers automatically (see [Backing up and moving your data](#8-backing-up-and-moving-your-data)).
+- All data is stored locally in the browser's `localStorage`. Nothing is sent anywhere. Data does not sync between devices or browsers automatically (see [Backing up and moving your data](#9-backing-up-and-moving-your-data)).
 - Built around a simple idea: **every week ends on a Friday.** All income and expenses are organized into these Friday-ending weeks, which roll up into months.
 - Four tabs in the app, reached from the bottom navigation bar: **Home**, **Weekly**, **Monthly**, **Budget**.
 
 ---
 
-## 2. Core concepts
+## 2. Downloading and installing
+
+There are two ways to use the app — pick whichever fits:
+
+- **No install** — just open `index.html` in any modern browser. That's the whole app; nothing to download or set up.
+- **Desktop app** — an installable Windows/Mac/Linux version of the exact same app, with its own icon and window (built with [Tauri](https://tauri.app)).
+
+### Getting the desktop app
+
+1. Go to the [Releases page](https://github.com/seandelaney2003/ExpenseTracker/releases) and open the **latest release** (the one at the top).
+2. Under **Assets**, download the file for your OS:
+
+   | OS | File | Notes |
+   | --- | --- | --- |
+   | Windows | `Expense.Tracker_<version>_x64-setup.exe` | The standard installer — use this one. |
+   | Windows | `Expense.Tracker_<version>_x64_en-US.msi` | Alternative installer format (same app). |
+   | macOS | `Expense.Tracker_<version>_aarch64.dmg` | Apple Silicon (M1/M2/M3/M4) Macs only — current builds don't cover Intel Macs. |
+   | Linux | `Expense.Tracker_<version>_amd64.AppImage` | Portable — no install needed, see below. |
+   | Linux | `Expense.Tracker_<version>_amd64.deb` | For Debian/Ubuntu-based distros. |
+
+3. Install it:
+   - **Windows** — run the downloaded `.exe` (or `.msi`) and follow the installer.
+   - **macOS** — open the `.dmg` and drag **Expense Tracker** into **Applications**.
+   - **Linux (AppImage)** — make it executable and run it directly: `chmod +x Expense.Tracker_*.AppImage && ./Expense.Tracker_*.AppImage`
+   - **Linux (.deb)** — `sudo apt install ./Expense.Tracker_*.deb` (or `sudo dpkg -i`).
+4. Launch it. It opens to the intro screen first — tap **Open the Tracker** to get into the app itself.
+
+### A warning you'll probably see the first time
+
+The app isn't code-signed yet, so both the browser download and the OS may flag it the first time — this is expected, not a sign anything is actually wrong:
+
+- **Browser download blocked** ("Dangerous download blocked" in Chrome/Edge) — click the download in your browser's download bar/menu and choose **Keep** / **Download anyway**.
+- **Windows SmartScreen** ("Windows protected your PC") — click **More info**, then **Run anyway**.
+- **macOS Gatekeeper** ("can't be opened because Apple cannot check it for malicious software") — right-click (Control-click) the app in Applications, choose **Open**, then confirm **Open** in the dialog. Only needed the first time.
+
+---
+
+## 3. Core concepts
 
 These ideas show up across every tab, so understanding them first makes the rest of the app self-explanatory.
 
@@ -57,7 +94,7 @@ Expense categories are organized into groups (Housing, Utilities, Transportation
 
 ---
 
-## 3. The Home tab
+## 4. The Home tab
 
 The dashboard, meant to be checked at a glance.
 
@@ -70,7 +107,7 @@ Every card on this tab has a short explanation printed underneath it describing 
 
 ---
 
-## 4. The Weekly tab
+## 5. The Weekly tab
 
 A single week at a time, laid out as a simple checklist.
 
@@ -80,7 +117,7 @@ A single week at a time, laid out as a simple checklist.
 - At the bottom, an **Account Balance Snapshot** — enter your real balances as of this Friday. This is the same data shown everywhere else; updating it here updates Home, Monthly, and Budget too.
 - Use the arrows at the top to move week to week, or **Jump to current week**.
 
-## 5. The Monthly tab
+## 6. The Monthly tab
 
 The most detailed view, in two parts.
 
@@ -100,7 +137,7 @@ A grid: categories down the side, the month's Fridays across the top, grouped un
 
 Above the grid, a summary card shows Starting balance, Estimated ending balance, Actual balance, and Variance for the month, with its own explanation underneath.
 
-## 6. The Budget tab
+## 7. The Budget tab
 
 Where everything is configured.
 
@@ -118,7 +155,7 @@ Category names are locked by default to prevent accidental edits. **Double-click
 
 ---
 
-## 7. How to fill in the information — a step-by-step first run
+## 8. How to fill in the information — a step-by-step first run
 
 **Step 1 — Set up your categories (Budget tab).**
 Go to Budget. The app ships with a starter set of common categories (Paycheck 1/2, Mortgage, Electric, Food/Groceries, etc.) — rename, delete, or add to them until the list matches your real bills and income sources. For each one:
@@ -144,7 +181,7 @@ That's the entire loop: set it up once, then check boxes and update balances as 
 
 ---
 
-## 8. Backing up and moving your data
+## 9. Backing up and moving your data
 
 Because everything lives in the browser's local storage, it is tied to **one browser on one device**. To move data to a new device, a different browser, or just keep a safety copy:
 
@@ -155,7 +192,7 @@ There is no automatic cloud sync. Export regularly if the data matters to you.
 
 ---
 
-## 9. Good to know
+## 10. Good to know
 
 - All dollar amounts are whole dollars — no cents. Every dollar field shows a `$` prefix and has no spinner arrows; type the number directly.
 - Pressing Tab moves between fields in order, the same as any form.
