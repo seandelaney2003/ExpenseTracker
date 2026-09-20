@@ -12,6 +12,9 @@ on:
     tags:
       - 'v*'
 
+permissions:
+  contents: write  # needed to publish the GitHub Release when a tag is pushed
+
 jobs:
   build:
     strategy:
@@ -63,3 +66,23 @@ jobs:
             desktop-app/src-tauri/target/release/bundle/**/*.AppImage
             desktop-app/src-tauri/target/release/bundle/**/*.deb
           if-no-files-found: warn
+
+      # Only runs when this build was triggered by pushing a version tag
+      # (e.g. "v1.0.0") — publishes a numbered GitHub Release and attaches
+      # this platform's installer to it. Each of the three matrix jobs adds
+      # its own files to the same release, so it ends up with all three.
+      - name: Publish release
+        if: startsWith(github.ref, 'refs/tags/')
+        uses: softprops/action-gh-release@v2
+        with:
+          draft: true
+          generate_release_notes: true
+          files: |
+            desktop-app/src-tauri/target/release/bundle/**/*.msi
+            desktop-app/src-tauri/target/release/bundle/**/*.exe
+            desktop-app/src-tauri/target/release/bundle/**/*.dmg
+            desktop-app/src-tauri/target/release/bundle/**/*.app.tar.gz
+            desktop-app/src-tauri/target/release/bundle/**/*.AppImage
+            desktop-app/src-tauri/target/release/bundle/**/*.deb
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}

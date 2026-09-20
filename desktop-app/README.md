@@ -2,7 +2,9 @@
 
 This packages the same tracker (`../index.html`) as an installable Windows/Mac/Linux desktop app, using [Tauri](https://tauri.app). It uses the OS's built-in webview instead of bundling a browser, so installers come out around 5–10MB instead of Electron's 150MB+.
 
-**There is no separate desktop codebase.** The real app is `index.html` at the project root — that's the only file you should ever edit. Tauri itself runs `npm run sync` automatically before every dev/build (configured as `beforeDevCommand`/`beforeBuildCommand` in `tauri.conf.json`), copying it into `src/index.html`, so this folder never drifts out of sync with the web version and this happens no matter how the build is triggered (locally, or in CI).
+**There is no separate desktop codebase.** The real app files are `home.html` and `index.html` at the project root — those are the only files you should ever edit. Tauri itself runs `npm run sync` automatically before every dev/build (configured as `beforeDevCommand`/`beforeBuildCommand` in `tauri.conf.json`), copying both into `src/`, so this folder never drifts out of sync with the web version and this happens no matter how the build is triggered (locally, or in CI).
+
+The app **opens to `home.html`** (the intro screen) — its "Open the Tracker" button navigates to `index.html` inside the same window. Configured via `app.windows[0].url` in `tauri.conf.json`.
 
 ## Prerequisites
 
@@ -46,7 +48,7 @@ To use it:
 2. On GitHub, go to the **Actions** tab → **Build Desktop App** → **Run workflow**.
 3. When it finishes, download the installers from the run's **Artifacts** section (one zip per platform).
 
-It also runs automatically whenever you push a tag like `v1.0.0` — useful once you're cutting real releases.
+It also runs automatically whenever you push a tag like `v1.0.0` — see **Versioning & releases** below.
 
 ### First time pushing to GitHub
 
@@ -58,16 +60,29 @@ git push -u origin main
 
 (Create the empty repo on GitHub first — github.com → New repository — then use the URL it gives you above. No need to add a README or license there; this project already has one.)
 
+## Versioning & releases
+
+The app version lives in `src-tauri/tauri.conf.json` (`version`) — bump it before cutting a new release. To publish one:
+
+```
+git tag v1.0.1
+git push origin v1.0.1
+```
+
+Pushing a tag matching `v*` triggers the same build as above on all three platforms, then **publishes a GitHub Release** (as a **draft**) named after the tag, with every platform's installer attached and auto-generated release notes from the commits since the last tag. Go to the repo's **Releases** page, review it, and click **Publish release** when you're ready for it to go live — nothing is public until you do that.
+
+Keep `tauri.conf.json`'s `version` and the git tag in sync (e.g. version `1.0.1` → tag `v1.0.1`) so the app's own version number always matches the release it shipped in.
+
 ## App identity
 
 Configured in `src-tauri/tauri.conf.json`:
 - `productName`, `version`, `identifier` (the app's unique bundle ID — change `com.expensetracker.app` before shipping if you're branding this differently)
-- Window size/title under `app.windows`
-- Icons under `bundle.icon`, sourced from `src-tauri/icons/` — currently the Tauri scaffold's default icon set. **Replace these before selling the app.** The easiest way, once you have a square source PNG (ideally 1024×1024):
+- Window size/title/start page under `app.windows`
+- Icons under `bundle.icon`, sourced from `src-tauri/icons/` — a dollar-sign icon (`icon-source.png` in this folder is the 1024×1024 source it was generated from). To change it, replace the source image and re-run:
   ```
   npm run tauri icon path/to/your-logo.png
   ```
-  This regenerates every required size/format automatically.
+  This regenerates every required size/format automatically (it also produces iOS/Android icon sets, ready for whenever the mobile app is built).
 
 ## Notes
 
