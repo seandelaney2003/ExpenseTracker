@@ -1,0 +1,24 @@
+# OS junk
+.DS_Store
+Thumbs.db
+desktop.ini
+
+# Local Claude Code session state
+.claude/
+
+# Editor
+.vscode/*
+!.vscode/extensions.json
+.idea
+
+# Desktop app build tooling (each has its own more detailed .gitignore too)
+desktop-app/node_modules/
+desktop-app/src-tauri/target/
+desktop-app/src/
+
+# Local scratch/test files
+_check.js
+_full.js
+_test_body.js
+_stubs.js
+_combined.js

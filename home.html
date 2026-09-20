@@ -1,0 +1,299 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="theme-color" content="#0f172a">
+<title>Expense Tracker — Know your money, every Friday</title>
+<style>
+:root{
+  --bg:#f4f5f7; --bg-elev:#ffffff; --bg-sunken:#eceef2;
+  --text:#14171f; --text-dim:#5b6472; --text-faint:#8a92a1;
+  --border:#e2e5ea;
+  --accent:#2563eb; --accent-text:#ffffff;
+  --pos:#0f9d58; --pos-bg:#e6f6ec;
+  --neg:#d93025; --neg-bg:#fdeceb;
+  --warn:#b7791f; --warn-bg:#fdf3e2;
+  --income:#0f9d58; --expense:#d93025;
+  --shadow: 0 1px 2px rgba(16,24,40,.06), 0 1px 3px rgba(16,24,40,.08);
+  --radius: 14px;
+}
+@media (prefers-color-scheme: dark){
+  :root{
+    --bg:#0d1117; --bg-elev:#161b22; --bg-sunken:#0a0d12;
+    --text:#e6e9ef; --text-dim:#9aa4b2; --text-faint:#6b7484;
+    --border:#262c37;
+    --accent:#5b9dff; --accent-text:#0a0d12;
+    --pos:#3ddc84; --pos-bg:#0f2b1c;
+    --neg:#ff6b6b; --neg-bg:#2c1414;
+    --warn:#f0b649; --warn-bg:#2a2110;
+    --income:#3ddc84; --expense:#ff6b6b;
+    --shadow: 0 1px 2px rgba(0,0,0,.4), 0 2px 6px rgba(0,0,0,.35);
+  }
+}
+*{box-sizing:border-box;}
+html,body{margin:0; padding:0;}
+body{
+  background:var(--bg); color:var(--text);
+  font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Helvetica,Arial,sans-serif;
+  line-height:1.5;
+}
+img,svg{max-width:100%;}
+a{color:inherit;}
+.wrap{max-width:1040px; margin:0 auto; padding:0 20px;}
+.num{font-variant-numeric:tabular-nums;}
+.pos{color:var(--pos);}
+.neg{color:var(--neg);}
+
+/* ---------- Header ---------- */
+header.site{
+  position:sticky; top:0; z-index:20; background:var(--bg); border-bottom:1px solid var(--border);
+}
+header.site .wrap{display:flex; align-items:center; justify-content:space-between; padding-top:14px; padding-bottom:14px;}
+.brand{font-weight:800; font-size:1.05rem; letter-spacing:.2px;}
+.btn{
+  display:inline-flex; align-items:center; gap:6px; border-radius:10px; font-weight:700; cursor:pointer;
+  text-decoration:none; border:none; font-family:inherit;
+}
+.btn-primary{background:var(--accent); color:var(--accent-text); padding:11px 20px; font-size:.92rem; box-shadow:var(--shadow);}
+.btn-ghost{background:var(--bg-elev); color:var(--text); border:1px solid var(--border); padding:9px 16px; font-size:.85rem;}
+
+/* ---------- Hero ---------- */
+.hero{padding:64px 0 40px;}
+.hero .wrap{display:grid; grid-template-columns:1.1fr 1fr; gap:48px; align-items:center;}
+.hero h1{font-size:2.4rem; line-height:1.12; margin:0 0 18px; letter-spacing:-.5px;}
+.hero .lede{font-size:1.05rem; color:var(--text-dim); margin:0 0 26px; max-width:46ch;}
+.eyebrow{
+  display:inline-block; font-size:.72rem; font-weight:700; text-transform:uppercase; letter-spacing:.6px;
+  color:var(--accent); background:var(--bg-sunken); padding:5px 10px; border-radius:999px; margin-bottom:16px;
+}
+.hero-cta{display:flex; gap:12px; flex-wrap:wrap;}
+
+/* ---------- Mock dashboard visual ---------- */
+.mock-card{
+  background:var(--bg-elev); border:1px solid var(--border); border-radius:var(--radius);
+  padding:18px; box-shadow:var(--shadow);
+}
+.mock-tiles{display:grid; grid-template-columns:1fr 1fr; gap:10px;}
+.mock-tile{background:var(--bg-sunken); border-radius:10px; padding:12px 10px; text-align:center;}
+.mock-tile .lbl{font-size:.62rem; color:var(--text-faint); text-transform:uppercase; letter-spacing:.4px;}
+.mock-tile .val{font-size:1.05rem; font-weight:800; margin-top:4px;}
+.mock-total{grid-column:1/-1; border:1px solid var(--border); background:var(--bg-elev);}
+.mock-foot{font-size:.68rem; color:var(--text-faint); margin-top:12px; line-height:1.5;}
+
+/* ---------- How it works ---------- */
+.section{padding:56px 0;}
+.section h2{font-size:1.6rem; margin:0 0 8px; letter-spacing:-.3px;}
+.section .sub{color:var(--text-dim); margin:0 0 32px; max-width:60ch;}
+.steps{display:grid; grid-template-columns:repeat(3,1fr); gap:20px;}
+.step{
+  background:var(--bg-elev); border:1px solid var(--border); border-radius:var(--radius);
+  padding:22px 20px; box-shadow:var(--shadow);
+}
+.step-num{
+  width:30px; height:30px; border-radius:50%; background:var(--accent); color:var(--accent-text);
+  display:flex; align-items:center; justify-content:center; font-weight:800; font-size:.85rem; margin-bottom:14px;
+}
+.step h3{margin:0 0 8px; font-size:1.02rem;}
+.step p{margin:0; color:var(--text-dim); font-size:.88rem;}
+
+/* ---------- Visual demo (calendar + spreadsheet) ---------- */
+.demo-grid{display:grid; grid-template-columns:1fr 1fr; gap:24px; align-items:start;}
+.demo-card{background:var(--bg-elev); border:1px solid var(--border); border-radius:var(--radius); padding:18px; box-shadow:var(--shadow);}
+.demo-card h4{margin:0 0 4px; font-size:.9rem;}
+.demo-card .demo-sub{font-size:.76rem; color:var(--text-faint); margin:0 0 14px;}
+
+.mini-cal-hdr{display:grid; grid-template-columns:repeat(7,1fr); gap:4px; font-size:.6rem; color:var(--text-faint); text-align:center; margin-bottom:6px; text-transform:uppercase;}
+.mini-cal{display:grid; grid-template-columns:repeat(7,1fr); gap:4px;}
+.mini-day{
+  aspect-ratio:1; border-radius:7px; display:flex; flex-direction:column; align-items:center; justify-content:center;
+  font-size:.62rem; color:var(--text-faint); position:relative;
+}
+.mini-day.blank{visibility:hidden;}
+.mini-day .n{font-weight:600;}
+.mini-day .item{font-size:.46rem; line-height:1.1; font-weight:400;}
+.mini-day.fri{background:var(--bg-sunken); color:var(--text); font-weight:700; border:1.5px solid transparent;}
+.mini-day.fri .sum{font-size:.5rem; margin-top:1px; font-weight:800;}
+.mini-day.warn{border-color:var(--warn);}
+.mini-day.warn::after{content:''; position:absolute; top:2px; right:2px; width:5px; height:5px; border-radius:50%; background:var(--warn);}
+.mini-day.due::after{content:''; position:absolute; bottom:2px; left:2px; width:4px; height:4px; border-radius:50%; background:var(--accent);}
+
+.mini-sheet{width:100%; border-collapse:collapse; font-size:.68rem;}
+.mini-sheet th{color:var(--text-faint); font-weight:600; font-size:.58rem; text-transform:uppercase; text-align:right; padding:4px 5px; border-bottom:1px solid var(--border);}
+.mini-sheet th:first-child, .mini-sheet td:first-child{text-align:left;}
+.mini-sheet td{padding:5px; text-align:right; border-bottom:1px solid var(--border);}
+.mini-sheet tr.grp td{font-weight:700; background:var(--bg-sunken); color:var(--text-dim); font-size:.58rem; text-transform:uppercase; text-align:left;}
+.mini-check{display:inline-block; width:10px; height:10px; border-radius:3px; border:1.3px solid var(--border); vertical-align:middle; margin-right:4px;}
+.mini-check.on{background:var(--pos); border-color:var(--pos);}
+td.paid{background:var(--pos-bg); color:var(--pos); font-weight:600;}
+td.unpaid{background:var(--warn-bg); color:var(--warn); font-weight:700;}
+
+/* ---------- Features ---------- */
+.feature-grid{display:grid; grid-template-columns:repeat(3,1fr); gap:18px;}
+.feature{background:var(--bg-elev); border:1px solid var(--border); border-radius:12px; padding:18px;}
+.feature .ico{font-size:1.3rem; margin-bottom:8px;}
+.feature h4{margin:0 0 6px; font-size:.92rem;}
+.feature p{margin:0; font-size:.82rem; color:var(--text-dim);}
+
+/* ---------- CTA / Footer ---------- */
+.cta{
+  background:var(--bg-elev); border:1px solid var(--border); border-radius:var(--radius);
+  padding:40px 32px; text-align:center; box-shadow:var(--shadow);
+}
+.cta h2{margin:0 0 10px;}
+.cta p{color:var(--text-dim); margin:0 0 22px;}
+footer{padding:32px 0 48px; text-align:center; color:var(--text-faint); font-size:.78rem;}
+
+@media (max-width:820px){
+  .hero .wrap{grid-template-columns:1fr;}
+  .hero h1{font-size:1.9rem;}
+  .steps{grid-template-columns:1fr;}
+  .demo-grid{grid-template-columns:1fr;}
+  .feature-grid{grid-template-columns:1fr 1fr;}
+}
+@media (max-width:520px){
+  .feature-grid{grid-template-columns:1fr;}
+  .mock-tiles{grid-template-columns:1fr 1fr;}
+}
+</style>
+</head>
+<body>
+
+<header class="site">
+  <div class="wrap">
+    <div class="brand">Expense Tracker</div>
+    <a class="btn btn-primary" href="index.html">Open the Tracker →</a>
+  </div>
+</header>
+
+<section class="hero">
+  <div class="wrap">
+    <div>
+      <span class="eyebrow">Weekly budgeting, done right</span>
+      <h1>Know exactly where your money stands — every Friday.</h1>
+      <p class="lede">A budget tracker built around how money actually moves: paychecks and bills land on a schedule, weeks end on Friday, and everything rolls up into a clear monthly picture. Set it up once. Then just check things off.</p>
+      <div class="hero-cta">
+        <a class="btn btn-primary" href="index.html">Open the Tracker</a>
+        <a class="btn btn-ghost" href="#how-it-works">See how it works</a>
+      </div>
+    </div>
+    <div class="mock-card">
+      <div class="mock-tiles">
+        <div class="mock-tile"><div class="lbl">Checking</div><div class="val">$11,747</div></div>
+        <div class="mock-tile"><div class="lbl">Savings</div><div class="val">$34,132</div></div>
+        <div class="mock-tile"><div class="lbl">Credit Card</div><div class="val neg">-$3,045</div></div>
+        <div class="mock-tile"><div class="lbl">Other Bank</div><div class="val">$1,100</div></div>
+        <div class="mock-tile mock-total"><div class="lbl">Total</div><div class="val">$39,753</div></div>
+      </div>
+      <div class="mock-foot">This is what you have today — every account added together, debts subtracted automatically. No projections, no guessing.</div>
+    </div>
+  </div>
+</section>
+
+<section class="section" id="how-it-works">
+  <div class="wrap">
+    <h2>How it works</h2>
+    <p class="sub">Three steps. Set it up once, then spend a minute a week keeping it current.</p>
+    <div class="steps">
+      <div class="step">
+        <div class="step-num">1</div>
+        <h3>Set up your categories, once</h3>
+        <p>Add your paychecks and bills, set how often each repeats — weekly, biweekly, monthly, quarterly, bi‑annually, or yearly — and the app builds your whole forecast automatically.</p>
+      </div>
+      <div class="step">
+        <div class="step-num">2</div>
+        <h3>Check things off as they happen</h3>
+        <p>Got paid? Paid a bill? Tap the checkbox. The amount locks in as what actually happened, right on the week it landed — your history never silently shifts later.</p>
+      </div>
+      <div class="step">
+        <div class="step-num">3</div>
+        <h3>See your real forecast</h3>
+        <p>Your dashboard shows what you have today, what's left to collect and pay this month, and where your balance is projected to land — instantly, with no math.</p>
+      </div>
+    </div>
+  </div>
+</section>
+
+<section class="section">
+  <div class="wrap">
+    <h2>A calendar and spreadsheet that speak your bank's language</h2>
+    <p class="sub">Every day shows what's actually due that day. Every Friday shows the real total for the week. You always know which number is which.</p>
+    <div class="demo-grid">
+      <div class="demo-card">
+        <h4>Monthly calendar</h4>
+        <p class="demo-sub">Individual bills shown on the day they're due — Fridays show the week's added‑up total, marked with Σ.</p>
+        <div class="mini-cal-hdr"><span>S</span><span>M</span><span>T</span><span>W</span><span>T</span><span>F</span><span>S</span></div>
+        <div class="mini-cal">
+          <div class="mini-day blank"></div><div class="mini-day blank"></div>
+          <div class="mini-day"><div class="n">1</div><div class="item neg">-$1,800</div></div>
+          <div class="mini-day"><div class="n">2</div></div>
+          <div class="mini-day"><div class="n">3</div></div>
+          <div class="mini-day fri warn"><div class="n">4</div><div class="sum pos">&Sigma;$212</div></div>
+          <div class="mini-day"><div class="n">5</div></div>
+          <div class="mini-day"><div class="n">6</div></div>
+          <div class="mini-day"><div class="n">7</div></div>
+          <div class="mini-day"><div class="n">8</div></div>
+          <div class="mini-day"><div class="n">9</div></div>
+          <div class="mini-day"><div class="n">10</div></div>
+          <div class="mini-day fri due"><div class="n">11</div><div class="sum pos">&Sigma;$1,340</div></div>
+          <div class="mini-day"><div class="n">12</div></div>
+          <div class="mini-day"><div class="n">13</div></div>
+          <div class="mini-day"><div class="n">14</div></div>
+          <div class="mini-day"><div class="n">15</div><div class="item pos">$3,000</div><div class="item neg">-$120</div></div>
+          <div class="mini-day"><div class="n">16</div></div>
+          <div class="mini-day"><div class="n">17</div></div>
+          <div class="mini-day fri"><div class="n">18</div><div class="sum neg">&Sigma;-$80</div></div>
+          <div class="mini-day"><div class="n">19</div></div>
+          <div class="mini-day"><div class="n">20</div></div>
+        </div>
+      </div>
+      <div class="demo-card">
+        <h4>Spreadsheet view</h4>
+        <p class="demo-sub">Check things off right in the grid — unpaid items are flagged until you do.</p>
+        <table class="mini-sheet">
+          <thead><tr><th>Category</th><th>9/4</th><th>9/11</th><th>9/18</th></tr></thead>
+          <tbody>
+            <tr class="grp"><td colspan="4">Income</td></tr>
+            <tr><td><span class="mini-check on"></span>Paycheck 1</td><td class="paid">$3,000</td><td>—</td><td>—</td></tr>
+            <tr class="grp"><td colspan="4">Expenses</td></tr>
+            <tr><td><span class="mini-check on"></span>Mortgage</td><td class="paid">$1,800</td><td>—</td><td>—</td></tr>
+            <tr><td><span class="mini-check"></span>Electric</td><td class="unpaid">$120</td><td>—</td><td>—</td></tr>
+            <tr><td><span class="mini-check"></span>Streaming</td><td>—</td><td class="unpaid">$18</td><td>—</td></tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+  </div>
+</section>
+
+<section class="section">
+  <div class="wrap">
+    <h2>Built for how budgets actually work</h2>
+    <p class="sub">Not a generic ledger — a system shaped around weekly pay and real bills.</p>
+    <div class="feature-grid">
+      <div class="feature"><div class="ico">📅</div><h4>Friday-ending weeks</h4><p>Every week closes on a Friday, matching how most paychecks and bills actually land.</p></div>
+      <div class="feature"><div class="ico">🔁</div><h4>Flexible recurrence</h4><p>Weekly, biweekly, monthly, quarterly, bi-annual, or yearly — each category keeps its own schedule.</p></div>
+      <div class="feature"><div class="ico">✅</div><h4>Check it off, lock it in</h4><p>Marking something done freezes the real amount, so later plan changes never rewrite your history.</p></div>
+      <div class="feature"><div class="ico">🏦</div><h4>Real account tracking</h4><p>Checking, Savings, Other Bank, and credit cards — debts always subtract automatically, no minus sign needed.</p></div>
+      <div class="feature"><div class="ico">🗂️</div><h4>Grouped budgeting</h4><p>Expenses organize into Housing, Utilities, Transportation, and more, so long lists stay easy to scan.</p></div>
+      <div class="feature"><div class="ico">🔒</div><h4>Private &amp; offline</h4><p>Everything stays on your device. No account, no server, no internet required after it loads.</p></div>
+    </div>
+  </div>
+</section>
+
+<section class="section">
+  <div class="wrap">
+    <div class="cta">
+      <h2>Set it up once. Check it off every week.</h2>
+      <p>No account to create, nothing to install — just open it and start.</p>
+      <a class="btn btn-primary" href="index.html">Open the Tracker</a>
+    </div>
+  </div>
+</section>
+
+<footer>
+  <div class="wrap">Your data stays on your device — nothing is uploaded, ever.</div>
+</footer>
+
+</body>
+</html>

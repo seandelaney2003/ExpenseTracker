@@ -1,0 +1,1902 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="theme-color" content="#0f172a">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<title>Expense Tracker</title>
+<style>
+:root{
+  --bg:#f4f5f7; --bg-elev:#ffffff; --bg-sunken:#eceef2;
+  --text:#14171f; --text-dim:#5b6472; --text-faint:#8a92a1;
+  --border:#e2e5ea;
+  --accent:#2563eb; --accent-text:#ffffff;
+  --pos:#0f9d58; --pos-bg:#e6f6ec;
+  --neg:#d93025; --neg-bg:#fdeceb;
+  --warn:#b7791f; --warn-bg:#fdf3e2;
+  --income:#0f9d58; --expense:#d93025;
+  --shadow: 0 1px 2px rgba(16,24,40,.06), 0 1px 3px rgba(16,24,40,.08);
+  --radius: 14px;
+  --radius-sm: 10px;
+  font-size: 16px;
+}
+@media (prefers-color-scheme: dark){
+  :root{
+    --bg:#0d1117; --bg-elev:#161b22; --bg-sunken:#0a0d12;
+    --text:#e6e9ef; --text-dim:#9aa4b2; --text-faint:#6b7484;
+    --border:#262c37;
+    --accent:#5b9dff; --accent-text:#0a0d12;
+    --pos:#3ddc84; --pos-bg:#0f2b1c;
+    --neg:#ff6b6b; --neg-bg:#2c1414;
+    --warn:#f0b649; --warn-bg:#2a2110;
+    --income:#3ddc84; --expense:#ff6b6b;
+    --shadow: 0 1px 2px rgba(0,0,0,.4), 0 2px 6px rgba(0,0,0,.35);
+  }
+}
+*{box-sizing:border-box; -webkit-tap-highlight-color:transparent;}
+html,body{height:100%;}
+body{
+  margin:0; background:var(--bg); color:var(--text);
+  font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+  padding-bottom: calc(64px + env(safe-area-inset-bottom));
+  overscroll-behavior-y: none;
+}
+h1,h2,h3,h4{margin:0; font-weight:700;}
+button{font-family:inherit;}
+input{font-family:inherit;}
+
+/* No spin buttons anywhere — every number field is typed in directly. */
+input[type=number]{-moz-appearance:textfield;}
+input[type=number]::-webkit-outer-spin-button,
+input[type=number]::-webkit-inner-spin-button{-webkit-appearance:none; margin:0;}
+
+/* Dollar-value fields: wrap an <input> in <span class="dollar-field"> to get
+   a fixed "$" prefix so it always reads as a currency amount. ".tight"
+   is the compact variant used inside the Monthly spreadsheet grid. */
+.dollar-field{position:relative; display:inline-block; width:100%;}
+.dollar-field::before{
+  content:'$'; position:absolute; left:7px; top:50%; transform:translateY(-50%);
+  color:var(--text-faint); font-size:.85em; pointer-events:none;
+}
+.dollar-field input{width:100%; padding-left:16px !important;}
+.dollar-field.tight::before{left:3px; font-size:.62rem;}
+.dollar-field.tight input{padding-left:11px !important;}
+
+/* ---------- App bar ---------- */
+.appbar{
+  position:sticky; top:0; z-index:20;
+  background:var(--bg-elev); border-bottom:1px solid var(--border);
+  padding: calc(10px + env(safe-area-inset-top)) 16px 10px;
+  display:flex; align-items:center; justify-content:space-between;
+}
+.appbar h1{font-size:1.05rem; letter-spacing:.2px;}
+.appbar .balance-pill{
+  display:flex; gap:8px; font-size:.72rem; color:var(--text-dim);
+}
+.appbar .balance-pill b{color:var(--text); font-variant-numeric:tabular-nums;}
+
+/* ---------- Layout ---------- */
+main{ max-width:720px; margin:0 auto; padding:14px 14px 28px; }
+.view{ display:none; animation: fade .15s ease; }
+.view.active{ display:block; }
+@keyframes fade{ from{opacity:0; transform:translateY(4px);} to{opacity:1; transform:none;} }
+
+.card{
+  background:var(--bg-elev); border:1px solid var(--border);
+  border-radius: var(--radius); padding:16px; margin-bottom:12px;
+  box-shadow: var(--shadow);
+}
+.card h3{font-size:.95rem;}
+.card + .card{margin-top:12px;}
+.section-title{
+  font-size:.72rem; font-weight:700; text-transform:uppercase; letter-spacing:.6px;
+  color:var(--text-faint); margin: 18px 2px 8px;
+}
+.section-title:first-child{margin-top:2px;}
+
+.row{display:flex; align-items:center; justify-content:space-between; gap:10px;}
+.muted{color:var(--text-dim);}
+.faint{color:var(--text-faint);}
+.num{font-variant-numeric:tabular-nums;}
+.pos{color:var(--pos);}
+.neg{color:var(--neg);}
+.calc-note{
+  margin-top:12px; padding-top:10px; border-top:1px solid var(--border);
+  font-size:.72rem; line-height:1.4; color:var(--text-faint);
+}
+
+/* ---------- Balance grid (dashboard) ---------- */
+.bal-grid{display:grid; grid-template-columns:1fr 1fr; gap:10px;}
+.bal-tile{
+  background:var(--bg-sunken); border-radius:var(--radius-sm); padding:12px 10px; text-align:center;
+}
+.bal-tile .lbl{font-size:.68rem; color:var(--text-faint); text-transform:uppercase; letter-spacing:.4px;}
+.bal-tile .val{font-size:1.15rem; font-weight:700; margin-top:4px; font-variant-numeric:tabular-nums;}
+.bal-tile-total{grid-column:1/-1; border:1px solid var(--border);}
+
+.variance-badge{
+  display:inline-flex; align-items:center; gap:6px; padding:5px 10px;
+  border-radius:999px; font-size:.8rem; font-weight:700;
+}
+.variance-badge.pos{background:var(--pos-bg); color:var(--pos);}
+.variance-badge.neg{background:var(--neg-bg); color:var(--neg);}
+.variance-badge.neu{background:var(--bg-sunken); color:var(--text-dim);}
+
+.mini-list .mini-item{
+  display:flex; justify-content:space-between; align-items:center;
+  padding:10px 0; border-top:1px solid var(--border); font-size:.88rem;
+}
+.mini-list .mini-item:first-child{border-top:none;}
+.mini-item .mtitle{font-weight:600;}
+.mini-item .msub{font-size:.74rem; color:var(--text-faint);}
+
+/* ---------- Week/Month nav ---------- */
+.nav-strip{
+  display:flex; align-items:center; justify-content:space-between; gap:8px; margin-bottom:12px;
+}
+.nav-strip .navlabel{text-align:center; flex:1;}
+.nav-strip .navlabel .big{font-size:1.05rem; font-weight:700;}
+.nav-strip .navlabel .small{font-size:.75rem; color:var(--text-faint);}
+.iconbtn{
+  width:38px; height:38px; border-radius:50%; border:1px solid var(--border);
+  background:var(--bg-elev); color:var(--text); font-size:1.05rem; line-height:1;
+  display:flex; align-items:center; justify-content:center; cursor:pointer;
+}
+.iconbtn:active{background:var(--bg-sunken);}
+.linkbtn{
+  border:none; background:none; color:var(--accent); font-size:.82rem; font-weight:600; cursor:pointer; padding:6px 2px;
+}
+
+/* ---------- Category entry rows ---------- */
+.wk-group-header{
+  font-size:.65rem; font-weight:700; text-transform:uppercase; letter-spacing:.5px;
+  color:var(--accent); margin:10px 0 2px; padding-top:8px; border-top:1px solid var(--border);
+}
+.wk-group-header:first-child{margin-top:0; padding-top:0; border-top:none;}
+.cat-row{
+  display:grid; grid-template-columns: 22px 1fr 78px 78px; gap:8px; align-items:center;
+  padding:9px 0; border-top:1px solid var(--border);
+}
+.cat-row:first-child{border-top:none;}
+.cat-row .cname{font-size:.87rem; font-weight:500; overflow:hidden; text-overflow:ellipsis; white-space:nowrap;}
+.cat-row input[type=number]{
+  width:100%; border:1px solid var(--border); background:var(--bg-sunken); color:var(--text);
+  border-radius:8px; padding:7px 6px; font-size:.83rem; text-align:right;
+}
+.cat-row input[type=checkbox]{
+  width:20px; height:20px; accent-color:var(--accent); cursor:pointer;
+}
+.col-hdr{
+  display:grid; grid-template-columns: 22px 1fr 78px 78px; gap:8px;
+  font-size:.65rem; text-transform:uppercase; letter-spacing:.4px; color:var(--text-faint); padding-bottom:4px;
+}
+.col-hdr span:nth-child(3), .col-hdr span:nth-child(4){text-align:right;}
+
+.totals-row{
+  display:flex; justify-content:space-between; padding-top:10px; margin-top:6px;
+  border-top:2px solid var(--border); font-weight:700; font-size:.9rem;
+}
+
+.bal-input-row{display:grid; grid-template-columns:1fr 110px; gap:8px; align-items:center; padding:8px 0;}
+.bal-input-row input{
+  border:1px solid var(--border); background:var(--bg-sunken); color:var(--text);
+  border-radius:8px; padding:8px; font-size:.9rem; text-align:right; width:100%;
+}
+
+/* ---------- Calendar strip ---------- */
+.cal-weekdays{
+  display:grid; grid-template-columns:repeat(7,1fr); gap:4px; margin-bottom:6px;
+  font-size:.62rem; text-transform:uppercase; letter-spacing:.3px; color:var(--text-faint); text-align:center;
+}
+.cal-grid{display:grid; grid-template-columns:repeat(7,1fr); gap:4px;}
+.cal-day{
+  aspect-ratio:1; border-radius:8px; display:flex; flex-direction:column; align-items:center; justify-content:center;
+  font-size:.72rem; color:var(--text-faint); background:none; position:relative;
+}
+.cal-day .dnum{font-weight:600;}
+/* Friday: one added-up weekly total — bold, tabular, marked with a Σ so it
+   reads unmistakably as a sum, never confused with the individual amounts
+   below on plain days. */
+.cal-day .damt-total{
+  font-size:.58rem; margin-top:1px; font-variant-numeric:tabular-nums; font-weight:800;
+  letter-spacing:-.2px;
+}
+.cal-day.cal-fri{
+  background:var(--bg-sunken); color:var(--text); cursor:pointer; font-weight:700; border:1.5px solid transparent;
+}
+.cal-day.cal-fri.pos-week .damt-total{color:var(--pos);}
+.cal-day.cal-fri.neg-week .damt-total{color:var(--neg);}
+.cal-day.cal-fri:active{transform:scale(.96);}
+.cal-day.cal-fri.cal-selected{border-color:var(--accent); background:var(--bg-elev); box-shadow:0 0 0 1px var(--accent);}
+.cal-day.cal-today{outline:1.5px solid var(--accent); outline-offset:-1.5px;}
+.cal-day.cal-fri.has-unpaid{border-color:var(--warn);}
+.cal-day.cal-fri.has-unpaid::after{
+  content:''; position:absolute; top:3px; right:3px; width:6px; height:6px;
+  border-radius:50%; background:var(--warn);
+}
+.cal-day.cal-fri.has-due-marker::before{
+  content:''; position:absolute; bottom:3px; left:3px; width:5px; height:5px;
+  border-radius:50%; background:var(--accent);
+}
+.cal-day.has-due{background:var(--bg-sunken); color:var(--text); cursor:pointer; font-weight:600;}
+.cal-day.has-due:active{transform:scale(.96);}
+/* Plain days: each due item shown separately, un-added — thin, no bold, no
+   Σ — the opposite visual weight of the Friday total on purpose. */
+.cal-day .damt-item{
+  font-size:.5rem; line-height:1.15; font-weight:400; font-variant-numeric:tabular-nums;
+}
+.cal-day .damt-item.pos-amt{color:var(--pos);}
+.cal-day .damt-item.neg-amt{color:var(--neg);}
+.cal-day .damt-item.damt-more{color:var(--text-faint); font-style:italic;}
+.cal-hint{font-size:.72rem; color:var(--text-faint); text-align:center; margin-top:10px;}
+.cal-info-btn{
+  position:absolute; top:12px; right:12px; width:22px; height:22px; border-radius:50%;
+  border:1px solid var(--border); background:var(--bg-sunken); color:var(--text-faint);
+  font-size:.85rem; line-height:1; cursor:pointer; display:flex; align-items:center; justify-content:center; z-index:2; padding:0;
+}
+.cal-info-btn:active{color:var(--accent); border-color:var(--accent);}
+.cal-info-panel{
+  display:none; font-size:.72rem; line-height:1.55; color:var(--text-dim);
+  background:var(--bg-sunken); border-radius:10px; padding:10px 12px; margin-top:10px;
+}
+.cal-info-panel.open{display:block;}
+
+/* ---------- Monthly grid (spreadsheet) ---------- */
+.grid-scroll{overflow-x:auto; margin:0 -16px; padding:0 16px;}
+table.mgrid{border-collapse:collapse; width:100%; font-size:.78rem; min-width:560px;}
+table.mgrid th, table.mgrid td{padding:5px 6px; text-align:right; white-space:nowrap;}
+table.mgrid th:first-child, table.mgrid td:first-child{text-align:left; position:sticky; left:0; background:var(--bg-elev); z-index:1; padding-left:8px;}
+table.mgrid thead th{color:var(--text-faint); font-weight:600; font-size:.66rem; text-transform:uppercase; border-bottom:1px solid var(--border); padding-bottom:8px;}
+table.mgrid tbody tr{border-bottom:1px solid var(--border);}
+table.mgrid tbody tr.grp td{font-weight:700; background:var(--bg-sunken); color:var(--text-dim); font-size:.66rem; text-transform:uppercase; text-align:left;}
+table.mgrid tbody tr.grp-sub td{font-weight:600; background:none; color:var(--accent); font-size:.62rem; text-transform:uppercase; text-align:left; padding-top:8px; padding-bottom:3px;}
+table.mgrid td.total-col, table.mgrid th.total-col{font-weight:700; border-left:2px solid var(--border);}
+table.mgrid td.gcell{background:var(--bg-elev); position:relative;}
+table.mgrid td.gcell.is-override{box-shadow:inset 0 0 0 1.5px var(--accent);}
+table.mgrid td.gcell.is-off-schedule input[type=number]{opacity:.4;}
+table.mgrid td.gcell .gwrap{display:flex; align-items:center; justify-content:flex-end; gap:4px;}
+table.mgrid td.gcell input[type=checkbox]{width:14px; height:14px; accent-color:var(--accent); cursor:pointer; flex:none;}
+table.mgrid td.gcell input[type=number]{
+  border:1px solid var(--border); background:var(--bg-sunken); color:var(--text);
+  border-radius:6px; padding:4px 3px; font-size:.72rem; text-align:right;
+}
+table.mgrid td.gcell .dollar-field{width:56px; flex:none;}
+table.mgrid td.gcell.g-checked-inc{background:var(--pos-bg);}
+table.mgrid td.gcell.g-checked-exp{background:var(--neg-bg);}
+table.mgrid td.gcell.is-unpaid{background:var(--warn-bg); box-shadow:inset 0 0 0 1.5px var(--warn);}
+table.mgrid td.gcell.is-unpaid input[type=number]{color:var(--warn); font-weight:700;}
+table.mgrid td.gcell.is-unpaid input[type=checkbox]{outline:1.5px solid var(--warn); outline-offset:1px; border-radius:3px;}
+table.mgrid th.col-today, table.mgrid td.col-today{box-shadow:inset 0 0 0 1.5px var(--accent);}
+table.mgrid th.col-focus, table.mgrid td.col-focus{background:var(--bg-sunken);}
+table.mgrid td.gcell.col-focus.g-checked-inc{background:var(--pos-bg);}
+table.mgrid td.gcell.col-focus.g-checked-exp{background:var(--neg-bg);}
+table.mgrid td.gcell.col-focus.is-unpaid{background:var(--warn-bg);}
+table.mgrid tr.row-total td, table.mgrid tr.row-balance td{font-weight:700; border-top:2px solid var(--border);}
+table.mgrid tr.row-balance td{color:var(--accent);}
+
+/* ---------- Recurring-plan override badge (grid + weekly cat rows) ---------- */
+.ov-reset{
+  position:absolute; top:-1px; right:-1px; width:15px; height:15px; border-radius:50%;
+  border:none; background:var(--accent); color:var(--accent-text); font-size:9px; line-height:15px;
+  padding:0; cursor:pointer; z-index:2;
+}
+.plan-wrap{position:relative;}
+.plan-wrap.is-override input[type=number]{border-color:var(--accent); box-shadow:inset 0 0 0 1px var(--accent);}
+.plan-wrap.is-off-schedule input[type=number]{opacity:.4;}
+
+/* ---------- Budget setup ---------- */
+.budget-group-header{
+  font-size:.66rem; font-weight:700; text-transform:uppercase; letter-spacing:.5px;
+  color:var(--accent); margin:14px 0 2px; padding-top:8px; border-top:1px solid var(--border);
+}
+.budget-group-header:first-child{margin-top:0; padding-top:0; border-top:none;}
+.budget-cat{padding:7px 0; border-top:1px solid var(--border);}
+.budget-cat:first-child{border-top:none;}
+.budget-cat-top{display:flex; gap:6px; align-items:center;}
+.budget-cat-controls{display:flex; flex-wrap:wrap; gap:5px 6px; align-items:center; margin-top:5px;}
+.budget-cat input[type=text]{
+  border:1px solid var(--border); background:var(--bg-sunken); color:var(--text);
+  border-radius:7px; padding:6px 7px; font-size:.82rem; width:100%; flex:1;
+}
+.budget-cat input[type=number]{
+  border:1px solid var(--border); background:var(--bg-sunken); color:var(--text);
+  border-radius:7px; padding:4px 5px; font-size:.76rem; text-align:right;
+}
+.budget-cat-controls .dollar-field{width:64px; flex:none;}
+.bc-toggle{display:flex; align-items:center; gap:3px; font-size:.7rem; color:var(--text-dim); cursor:pointer; flex:none;}
+.bc-toggle input[type=checkbox]{width:13px; height:13px; accent-color:var(--accent); cursor:pointer;}
+.bc-variable-note{font-size:.68rem; color:var(--text-faint); font-style:italic; flex:none;}
+.bc-due{width:40px !important;}
+.due-badge{display:block; font-size:.6rem; color:var(--text-faint); font-weight:400;}
+.due-badge-inline{font-size:.85em; color:var(--text-faint); font-weight:400;}
+.bc-sel, .bc-date{
+  border:1px solid var(--border); background:var(--bg-sunken); color:var(--text);
+  border-radius:7px; padding:4px 5px; font-size:.7rem; flex:none;
+}
+
+/* ---------- Locked title fields (require double-click/pencil to edit) ---------- */
+.title-locked{
+  display:flex; align-items:center; gap:5px; flex:1; min-width:0;
+  font-size:.82rem; font-weight:600; padding:5px 2px; user-select:none;
+}
+.title-locked-text{overflow:hidden; text-overflow:ellipsis; white-space:nowrap;}
+.title-edit-btn{
+  border:none; background:none; color:var(--text-faint); font-size:.78rem; cursor:pointer;
+  padding:2px 4px; flex:none; line-height:1;
+}
+.title-edit-btn:active{color:var(--accent);}
+.title-input{
+  border:1px solid var(--accent); background:var(--bg-sunken); color:var(--text);
+  border-radius:7px; padding:6px 7px; font-size:.82rem; width:100%; flex:1;
+}
+.del-btn{
+  border:none; background:var(--neg-bg); color:var(--neg); width:26px; height:26px; border-radius:7px;
+  font-size:.9rem; cursor:pointer; flex:none;
+}
+.add-btn{
+  width:100%; margin-top:10px; padding:10px; border-radius:10px; border:1px dashed var(--border);
+  background:none; color:var(--accent); font-weight:600; font-size:.85rem; cursor:pointer;
+}
+.primary-btn{
+  width:100%; padding:12px; border-radius:10px; border:none; background:var(--accent); color:var(--accent-text);
+  font-weight:700; font-size:.9rem; cursor:pointer;
+}
+.ghost-btn{
+  padding:10px 14px; border-radius:10px; border:1px solid var(--border); background:var(--bg-elev); color:var(--text);
+  font-weight:600; font-size:.85rem; cursor:pointer;
+}
+.btn-row{display:flex; gap:10px; flex-wrap:wrap;}
+.btn-row > *{flex:1;}
+
+/* ---------- Bottom nav ---------- */
+.tabbar{
+  position:fixed; left:0; right:0; bottom:0; z-index:30;
+  background:var(--bg-elev); border-top:1px solid var(--border);
+  display:flex; padding-bottom: env(safe-area-inset-bottom);
+}
+.tabbar button{
+  flex:1; background:none; border:none; padding:9px 4px 8px; cursor:pointer;
+  color:var(--text-faint); display:flex; flex-direction:column; align-items:center; gap:3px; font-size:.65rem; font-weight:600;
+}
+.tabbar button svg{width:22px; height:22px;}
+.tabbar button.active{color:var(--accent);}
+
+/* ---------- Modal ---------- */
+.modal-overlay{
+  position:fixed; inset:0; background:rgba(0,0,0,.45); display:none; align-items:flex-end; justify-content:center; z-index:50;
+}
+.modal-overlay.open{display:flex;}
+.modal{
+  background:var(--bg-elev); width:100%; max-width:480px; border-radius:18px 18px 0 0;
+  padding:20px 18px calc(20px + env(safe-area-inset-bottom)); box-shadow:0 -4px 20px rgba(0,0,0,.2);
+}
+.modal h3{margin-bottom:14px;}
+.modal .field{margin-bottom:12px;}
+.modal label{display:block; font-size:.75rem; color:var(--text-dim); margin-bottom:5px; font-weight:600;}
+.modal input{
+  width:100%; border:1px solid var(--border); background:var(--bg-sunken); color:var(--text);
+  border-radius:10px; padding:11px; font-size:.95rem;
+}
+
+.empty-hint{color:var(--text-faint); font-size:.82rem; text-align:center; padding:16px 0;}
+.toast{
+  position:fixed; bottom:74px; left:50%; transform:translateX(-50%);
+  background:var(--text); color:var(--bg); padding:8px 16px; border-radius:20px; font-size:.8rem;
+  opacity:0; pointer-events:none; transition:opacity .2s; z-index:60;
+}
+.toast.show{opacity:1;}
+</style>
+</head>
+<body>
+
+<header class="appbar">
+  <h1>Expense Tracker</h1>
+  <div class="balance-pill">Total <b id="hdr-total">$0</b></div>
+</header>
+
+<main>
+
+  <!-- ===================== DASHBOARD ===================== -->
+  <section id="view-dashboard" class="view">
+    <div class="card">
+      <h3 style="margin-bottom:2px;">What You Have Today</h3>
+      <div class="faint" style="font-size:.72rem; margin-bottom:10px;">Your real balances, right now — not a projection.</div>
+      <div class="bal-grid" id="dash-balances"></div>
+      <div class="faint" style="font-size:.7rem; margin-top:8px;">Total = every account added together. Credit cards and other debts always count as money owed and subtract automatically — just enter the amount, no minus sign needed.</div>
+      <button class="primary-btn" style="margin-top:12px" onclick="openBalanceModal()">Update Balances</button>
+      <div class="faint" id="dash-updated" style="font-size:.7rem; text-align:center; margin-top:6px;"></div>
+    </div>
+
+    <div class="section-title">This Month</div>
+    <div class="card" id="dash-month-card"></div>
+
+    <div class="section-title">This Week</div>
+    <div class="card" id="dash-week-card"></div>
+
+    <div class="section-title">Projected Balances</div>
+    <div class="card">
+      <div class="mini-list" id="dash-projection"></div>
+    </div>
+  </section>
+
+  <!-- ===================== WEEKLY ===================== -->
+  <section id="view-weekly" class="view">
+    <div class="nav-strip">
+      <button class="iconbtn" onclick="stepWeek(-1)">&#8249;</button>
+      <div class="navlabel">
+        <div class="big" id="week-title">Week</div>
+        <div class="small" id="week-sub"></div>
+      </div>
+      <button class="iconbtn" onclick="stepWeek(1)">&#8250;</button>
+    </div>
+    <button class="linkbtn" style="display:block; margin:-6px auto 10px;" onclick="jumpToCurrentWeek()">Jump to current week</button>
+
+    <div class="card">
+      <h3 style="color:var(--income); margin-bottom:6px;">Income</h3>
+      <div class="col-hdr"><span></span><span>Category</span><span>Plan</span><span>Actual</span></div>
+      <div id="week-income"></div>
+      <div class="totals-row"><span>Estimated / Actual</span><span class="num"><span id="wk-inc-est">$0</span> / <span id="wk-inc-act">$0</span></span></div>
+    </div>
+
+    <div class="card">
+      <h3 style="color:var(--expense); margin-bottom:6px;">Expenses</h3>
+      <div class="col-hdr"><span></span><span>Category</span><span>Plan</span><span>Actual</span></div>
+      <div id="week-expense"></div>
+      <div class="totals-row"><span>Estimated / Actual</span><span class="num"><span id="wk-exp-est">$0</span> / <span id="wk-exp-act">$0</span></span></div>
+    </div>
+
+    <div class="card">
+      <h3 style="margin-bottom:2px;">Week Net</h3>
+      <div class="row" style="margin-top:8px;">
+        <span class="muted">Estimated net</span><span class="num" id="wk-net-est">$0</span>
+      </div>
+      <div class="row" style="margin-top:6px;">
+        <span class="muted">Actual net (checked items)</span><span class="num" id="wk-net-act">$0</span>
+      </div>
+    </div>
+
+    <div class="card">
+      <h3 style="margin-bottom:8px;">Account Balance Snapshot</h3>
+      <div class="muted" style="font-size:.78rem; margin-bottom:6px;">What's actually in your accounts as of this Friday. Credit cards and other debts: just enter what you owe — it's automatically treated as negative.</div>
+      <div id="wk-account-rows"></div>
+    </div>
+  </section>
+
+  <!-- ===================== MONTHLY ===================== -->
+  <section id="view-monthly" class="view">
+    <div class="nav-strip">
+      <button class="iconbtn" onclick="stepMonth(-1)">&#8249;</button>
+      <div class="navlabel">
+        <div class="big" id="month-title">Month</div>
+        <div class="small" id="month-sub"></div>
+      </div>
+      <button class="iconbtn" onclick="stepMonth(1)">&#8250;</button>
+    </div>
+    <button class="linkbtn" style="display:block; margin:-6px auto 10px;" onclick="jumpToCurrentMonth()">Jump to current month</button>
+
+    <div class="card" style="position:relative;">
+      <button class="cal-info-btn" onclick="toggleCalendarInfo()" aria-label="How this calendar works" title="How this calendar works">&#9432;</button>
+      <div class="cal-weekdays"><span>S</span><span>M</span><span>T</span><span>W</span><span>T</span><span>F</span><span>S</span></div>
+      <div class="cal-grid" id="mo-calendar"></div>
+      <div class="cal-hint">Tap &#9432; in the corner for how this calendar works.</div>
+      <div class="cal-info-panel" id="cal-info-panel">
+        <b>How this calendar works:</b> any day shows each income/expense item with that Due day set in Budget, listed <i>separately</i> — nothing is added together on a plain day. Hover or tap a day to see the full list plus its total in a tooltip. <b>Fridays</b> are different: they show your whole week's income minus expenses <i>added up</i>, marked with <b>&Sigma;</b> so a real sum is never confused with the individual amounts on other days. A <span style="color:var(--accent); font-weight:600;">blue dot</span> on a Friday means something is also specifically due that day. An <span style="color:var(--warn); font-weight:600;">amber dot</span> means that week has an unpaid expense. Tap any day to jump to its week in the spreadsheet below.
+      </div>
+    </div>
+
+    <div class="card">
+      <div class="row"><span class="muted">Starting balance</span><span class="num" id="mo-start">$0</span></div>
+      <div class="row" style="margin-top:8px;"><span class="muted">Estimated ending balance</span><span class="num" id="mo-est-end">$0</span></div>
+      <div class="row" style="margin-top:8px;"><span class="muted">Actual balance (latest)</span><span class="num" id="mo-act-end">$0</span></div>
+      <div class="row" style="margin-top:10px;"><span class="muted">Variance vs. anticipated</span><span id="mo-variance"></span></div>
+      <div class="calc-note">Starting balance is locked in the first time you open this month — your latest balance snapshot from before the month began, or your current accounts total if there wasn't one yet. Estimated ending balance = starting balance + planned income − planned expenses for every week in the month. Actual balance (latest) is the most recent balance you've entered in this month (Weekly, Monthly, or Budget), or your live current total if you haven't entered one yet. Variance = actual − estimated: green means you're ahead of plan, red means behind.</div>
+    </div>
+
+    <div class="card" id="mo-spreadsheet-card">
+      <h3 style="margin-bottom:2px;">Spreadsheet View</h3>
+      <div class="faint" style="font-size:.72rem; margin-bottom:8px;">Check items off as they clear. A blue box or the &#8630; badge means this week's amount was changed from the recurring plan — tap &#8630; to go back to the plan. <span style="color:var(--warn); font-weight:600;">Amber</span> expense cells are unpaid — check them off once they're paid.</div>
+      <div class="grid-scroll">
+        <table class="mgrid" id="mo-grid"></table>
+      </div>
+    </div>
+  </section>
+
+  <!-- ===================== BUDGET ===================== -->
+  <section id="view-budget" class="view">
+    <div class="section-title">Accounts</div>
+    <div class="card">
+      <div class="faint" style="font-size:.72rem; margin-bottom:8px;">These are the same balances shown on Home and in Weekly/Monthly — change one and it updates everywhere.</div>
+      <div id="budget-accounts"></div>
+    </div>
+
+    <div class="section-title">Income Categories</div>
+    <div class="card">
+      <div id="budget-income"></div>
+      <button class="add-btn" onclick="addCategory('income')">+ Add income category</button>
+    </div>
+
+    <div class="section-title">Expense Categories</div>
+    <div class="card">
+      <div id="budget-expense"></div>
+      <button class="add-btn" onclick="addCategory('expense')">+ Add expense category</button>
+    </div>
+    <div class="faint" style="font-size:.75rem; padding:0 4px 10px;">
+      <b>Recurring</b> categories: set the amount once here and it applies automatically — pick <b>Weekly</b>, <b>Biweekly</b>, or <b>Monthly</b> (which Friday of the month) below the toggle, and off-schedule weeks plan for $0 unless you type something in that one week. Edit a week's own box in Weekly or Monthly if you know just that week will differ. <b>Turn "Recurring" off</b> for things that change too often to plan (balancing accounts, etc.) — those have no default, so the box here sets just the current week's amount. For expenses, the small <b>Due day</b> box (1–31) is just a reference reminder — it shows up next to the name in Weekly and Monthly.
+    </div>
+
+    <div class="section-title">Data</div>
+    <div class="card">
+      <div class="btn-row">
+        <button class="ghost-btn" onclick="exportData()">Export backup</button>
+        <button class="ghost-btn" onclick="document.getElementById('import-file').click()">Import backup</button>
+      </div>
+      <input type="file" id="import-file" accept="application/json" style="display:none" onchange="importData(event)">
+      <button class="ghost-btn" style="margin-top:10px; width:100%; color:var(--neg);" onclick="resetAllData()">Reset all data</button>
+    </div>
+  </section>
+
+</main>
+
+<nav class="tabbar">
+  <button data-tab="dashboard" onclick="showTab('dashboard')">
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 11l9-8 9 8"/><path d="M5 10v10h14V10"/></svg>
+    Home
+  </button>
+  <button data-tab="weekly" onclick="showTab('weekly')">
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="4" width="18" height="17" rx="2"/><path d="M3 9h18M8 2v4M16 2v4"/><path d="M8 14h3"/></svg>
+    Weekly
+  </button>
+  <button data-tab="monthly" onclick="showTab('monthly')">
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="4" width="18" height="17" rx="2"/><path d="M3 9h18M8 2v4M16 2v4"/><path d="M7 14h.01M12 14h.01M17 14h.01M7 18h.01M12 18h.01"/></svg>
+    Monthly
+  </button>
+  <button data-tab="budget" onclick="showTab('budget')">
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 6h16M4 12h16M4 18h10"/></svg>
+    Budget
+  </button>
+</nav>
+
+<div class="modal-overlay" id="balance-modal">
+  <div class="modal">
+    <h3>Update Balances</h3>
+    <div id="modal-account-fields"></div>
+    <div class="faint" style="font-size:.72rem; margin:-4px 0 12px;">Credit cards and other debts: just enter what you owe — it's automatically treated as negative.</div>
+    <div class="btn-row" style="margin-top:6px;">
+      <button class="ghost-btn" onclick="closeBalanceModal()">Cancel</button>
+      <button class="primary-btn" onclick="saveBalanceModal()">Save</button>
+    </div>
+  </div>
+</div>
+
+<div class="toast" id="toast"></div>
+
+<script>
+/* =========================================================================
+   DATA MODEL
+   ========================================================================= */
+const STORAGE_KEY = 'expenseTrackerData.v1';
+
+// `recurring:true` categories use the plan-once-in-Budget model (a global
+// weekly default any single week can override). `recurring:false` categories
+// have no default at all — every week starts blank and is filled in fresh,
+// for things that change too often to plan (balancing accounts, etc).
+// Categories carry an optional dueDay (1-31) — a reference reminder shown as
+// a badge, and (for recurring categories) plotted on that calendar day in
+// the Monthly tab regardless of which Friday the plan itself falls on.
+const DEFAULT_CATEGORIES = {
+  income: [
+    { id:'paycheck1', name:'Paycheck 1', estimate:0, recurring:true, dueDay:null, frequency:'monthly', biweeklyAnchor:null, monthlyWeek:1, anchorMonth:0 },
+    { id:'paycheck2', name:'Paycheck 2', estimate:0, recurring:true, dueDay:null, frequency:'monthly', biweeklyAnchor:null, monthlyWeek:1, anchorMonth:0 },
+    { id:'other_income', name:'Other', estimate:0, recurring:true, dueDay:null, frequency:'monthly', biweeklyAnchor:null, monthlyWeek:1, anchorMonth:0 },
+  ],
+  expense: [
+    { id:'mortgage', name:'Mortgage', group:'Housing', estimate:0, recurring:true, dueDay:null, frequency:'monthly', biweeklyAnchor:null, monthlyWeek:1, anchorMonth:0 },
+    { id:'savings_transfer', name:'Savings', group:'Savings', estimate:0, recurring:true, dueDay:null, frequency:'monthly', biweeklyAnchor:null, monthlyWeek:1, anchorMonth:0 },
+    { id:'daycare', name:'Daycare', group:'Childcare', estimate:0, recurring:true, dueDay:null, frequency:'monthly', biweeklyAnchor:null, monthlyWeek:1, anchorMonth:0 },
+    { id:'internet', name:'Internet', group:'Utilities', estimate:0, recurring:true, dueDay:null, frequency:'monthly', biweeklyAnchor:null, monthlyWeek:1, anchorMonth:0 },
+    { id:'electric', name:'Electric', group:'Utilities', estimate:0, recurring:true, dueDay:null, frequency:'monthly', biweeklyAnchor:null, monthlyWeek:1, anchorMonth:0 },
+    { id:'water', name:'Water', group:'Utilities', estimate:0, recurring:true, dueDay:null, frequency:'monthly', biweeklyAnchor:null, monthlyWeek:1, anchorMonth:0 },
+    { id:'gas', name:'Gas for Home', group:'Utilities', estimate:0, recurring:true, dueDay:null, frequency:'monthly', biweeklyAnchor:null, monthlyWeek:1, anchorMonth:0 },
+    { id:'food', name:'Food/Groceries', group:'Food', estimate:0, recurring:true, dueDay:null, frequency:'monthly', biweeklyAnchor:null, monthlyWeek:1, anchorMonth:0 },
+    { id:'insurance', name:'Insurance', group:'Insurance', estimate:0, recurring:true, dueDay:null, frequency:'monthly', biweeklyAnchor:null, monthlyWeek:1, anchorMonth:0 },
+    { id:'mobile', name:'Mobile', group:'Subscriptions', estimate:0, recurring:true, dueDay:null, frequency:'monthly', biweeklyAnchor:null, monthlyWeek:1, anchorMonth:0 },
+    { id:'streaming', name:'Streaming', group:'Subscriptions', estimate:0, recurring:true, dueDay:null, frequency:'monthly', biweeklyAnchor:null, monthlyWeek:1, anchorMonth:0 },
+    { id:'trash', name:'Trash', group:'Utilities', estimate:0, recurring:true, dueDay:null, frequency:'monthly', biweeklyAnchor:null, monthlyWeek:1, anchorMonth:0 },
+    { id:'expenses_misc', name:'Weekly Play Money', group:'Personal', estimate:0, recurring:true, dueDay:null, frequency:'monthly', biweeklyAnchor:null, monthlyWeek:1, anchorMonth:0 },
+    { id:'oil', name:'Oil', group:'Transportation', estimate:0, recurring:true, dueDay:null, frequency:'monthly', biweeklyAnchor:null, monthlyWeek:1, anchorMonth:0 },
+    { id:'transportation', name:'Transportation', group:'Transportation', estimate:0, recurring:true, dueDay:null, frequency:'monthly', biweeklyAnchor:null, monthlyWeek:1, anchorMonth:0 },
+    { id:'gas_vehicles', name:'Gas for Vehicles', group:'Transportation', estimate:0, recurring:true, dueDay:null, frequency:'monthly', biweeklyAnchor:null, monthlyWeek:1, anchorMonth:0 },
+  ]
+};
+
+// Fixed set of expense groups, in the order they're displayed. A category
+// with no group (or a value not in this list, e.g. old data) falls into
+// "Other". Income is never grouped — only expenses.
+const EXPENSE_GROUPS = ['Housing','Utilities','Transportation','Food','Insurance','Subscriptions','Childcare','Savings','Personal','Other'];
+function expenseGroupOf(c){
+  return (c.group && EXPENSE_GROUPS.includes(c.group)) ? c.group : 'Other';
+}
+
+// The tracked balances shown together on Home, Weekly, Monthly, and Budget.
+// `debt:true` accounts (credit cards, etc.) always hold what's owed as a
+// negative number, so they subtract from the combined Total automatically —
+// enforced in normalizeAccountValue regardless of the sign someone types.
+const ACCOUNTS = [
+  { id:'checking', name:'Checking', debt:false },
+  { id:'savings', name:'Savings', debt:false },
+  { id:'otherBank', name:'Other Bank', debt:false },
+  { id:'creditCard1', name:'Credit Card 1', debt:true },
+  { id:'creditCard2', name:'Credit Card 2', debt:true },
+  { id:'otherDebt', name:'Other', debt:true },
+];
+function normalizeAccountValue(accountId, value){
+  if(value===null || value===undefined) return value;
+  const acct = ACCOUNTS.find(a=>a.id===accountId);
+  return (acct && acct.debt) ? -Math.abs(value) : value;
+}
+
+function freshState(){
+  const accounts = { updatedAt: null };
+  for(const a of ACCOUNTS) accounts[a.id] = 0;
+  return {
+    version: 7,
+    accounts,
+    categories: JSON.parse(JSON.stringify(DEFAULT_CATEGORIES)),
+    weeks: {},   // key: 'YYYY-MM-DD' (friday) -> { income:{id:{override,actual,checked}}, expense:{...}, <accountId>:null, ... }
+    months: {}   // key: 'YYYY-MM' -> { start:{<accountId>:n, ...}, startCapturedAt }
+  };
+}
+
+let state = loadState();
+
+function loadState(){
+  try{
+    const raw = localStorage.getItem(STORAGE_KEY);
+    if(!raw) return freshState();
+    const parsed = JSON.parse(raw);
+    if(!parsed.categories || !parsed.weeks || !parsed.months || !parsed.accounts) return freshState();
+    return ensureBaselineCategories(migrateState(parsed));
+  }catch(e){
+    console.error('Failed to load state, starting fresh.', e);
+    return freshState();
+  }
+}
+
+// v1 copied each category's estimate into every week (so editing Budget didn't
+// affect weeks already visited). v2 stores a per-week `override` instead and
+// falls back live to the category's recurring amount — this migrates old data.
+// v3 folds the short-lived "Checking/Savings/Other Bank" income categories
+// back into the single account-balance system (the same fields Weekly,
+// Monthly, and the Home tab already read/write) so there's one source of
+// truth instead of two separately-tracked copies, and adds a third tracked
+// account, Other Bank, alongside checking/savings everywhere balances live.
+function migrateState(parsed){
+  if((parsed.version||1) < 2){
+    for(const key in parsed.weeks){
+      const w = parsed.weeks[key];
+      for(const kind of ['income','expense']){
+        const entries = w[kind] || {};
+        for(const id in entries){
+          const e = entries[id];
+          const cat = (parsed.categories[kind]||[]).find(c=>c.id===id);
+          const def = cat ? Number(cat.estimate)||0 : 0;
+          const old = e.estimate;
+          delete e.estimate;
+          e.override = (old!==undefined && Number(old)!==def) ? Number(old) : null;
+          if(e.actual===undefined) e.actual = null;
+          if(e.checked===undefined) e.checked = false;
+        }
+      }
+    }
+    parsed.version = 2;
+  }
+  if((parsed.version||1) < 3){
+    const linkMap = { checking_income:'checking', savings_income:'savings', other_bank_income:'otherBank' };
+    for(const key in parsed.weeks){
+      const w = parsed.weeks[key];
+      if(w.otherBank===undefined) w.otherBank = null;
+      const inc = w.income || {};
+      for(const oldId in linkMap){
+        const e = inc[oldId];
+        if(e){
+          const target = linkMap[oldId];
+          if((w[target]===null || w[target]===undefined) && e.override!==null && e.override!==undefined){
+            w[target] = Number(e.override)||0;
+          }
+          delete inc[oldId];
+        }
+      }
+    }
+    parsed.categories.income = (parsed.categories.income||[]).filter(c => !['checking_income','savings_income','other_bank_income'].includes(c.id));
+    for(const c of (parsed.categories.expense||[])) if(c.dueDay===undefined) c.dueDay = null;
+    if(parsed.accounts.otherBank===undefined) parsed.accounts.otherBank = 0;
+    for(const mk in parsed.months) if(parsed.months[mk].startOtherBank===undefined) parsed.months[mk].startOtherBank = 0;
+    parsed.version = 3;
+  }
+  if((parsed.version||1) < 4){
+    // Credit Card 1/2 and the expense category "Other" move from being weekly
+    // payment-plan expenses into the account-balance system as debt accounts
+    // (Credit Card 1/2, Other) — you record the actual amount owed (negative)
+    // when you balance things, same as Checking/Savings. Their old payment
+    // amounts aren't a balance owed, so nothing is carried over automatically.
+    const movedExpenseIds = ['credit_card_1','credit_card_2','other_expense'];
+    for(const key in parsed.weeks){
+      const w = parsed.weeks[key];
+      for(const a of ACCOUNTS) if(w[a.id]===undefined) w[a.id] = null;
+      const exp = w.expense || {};
+      for(const oldId of movedExpenseIds) delete exp[oldId];
+    }
+    parsed.categories.expense = (parsed.categories.expense||[]).filter(c => !movedExpenseIds.includes(c.id));
+    for(const a of ACCOUNTS) if(parsed.accounts[a.id]===undefined) parsed.accounts[a.id] = 0;
+    // month-start balances move from flat startChecking/startSavings/... to a
+    // single nested `start` object keyed by account id, so any account (old
+    // or new) can be summed the same way.
+    for(const mk in parsed.months){
+      const m = parsed.months[mk];
+      if(!m.start){
+        m.start = {
+          checking: m.startChecking!==undefined ? m.startChecking : 0,
+          savings: m.startSavings!==undefined ? m.startSavings : 0,
+          otherBank: m.startOtherBank!==undefined ? m.startOtherBank : 0,
+          creditCard1: 0, creditCard2: 0, otherDebt: 0
+        };
+        delete m.startChecking; delete m.startSavings; delete m.startOtherBank;
+      }
+      for(const a of ACCOUNTS) if(m.start[a.id]===undefined) m.start[a.id] = 0;
+    }
+    for(const c of (parsed.categories.income||[])) if(!c.frequency) c.frequency = 'monthly';
+    for(const c of (parsed.categories.expense||[])) if(!c.frequency) c.frequency = 'monthly';
+    parsed.version = 4;
+  }
+  if((parsed.version||1) < 5){
+    // Debt accounts (Credit Card 1/2, Other) always represent money owed —
+    // force any already-entered positive balances negative so they actually
+    // subtract from Total, instead of relying on someone remembering "-".
+    const debtIds = ACCOUNTS.filter(a=>a.debt).map(a=>a.id);
+    for(const id of debtIds){
+      if(parsed.accounts[id]!==undefined && parsed.accounts[id]!==null){
+        parsed.accounts[id] = -Math.abs(Number(parsed.accounts[id])||0);
+      }
+    }
+    for(const key in parsed.weeks){
+      const w = parsed.weeks[key];
+      for(const id of debtIds){
+        if(w[id]!==undefined && w[id]!==null) w[id] = -Math.abs(Number(w[id])||0);
+      }
+    }
+    for(const mk in parsed.months){
+      const m = parsed.months[mk];
+      if(m.start){
+        for(const id of debtIds){
+          if(m.start[id]!==undefined && m.start[id]!==null) m.start[id] = -Math.abs(Number(m.start[id])||0);
+        }
+      }
+    }
+    parsed.version = 5;
+  }
+  if((parsed.version||1) < 6){
+    // Rename a few built-in expense categories to clearer names — but only
+    // if the name still matches the old default, so a category someone
+    // already renamed themselves is never overwritten.
+    const renameIfUnchanged = (kind, id, oldName, newName) => {
+      const c = (parsed.categories[kind]||[]).find(x=>x.id===id);
+      if(c && c.name===oldName) c.name = newName;
+    };
+    renameIfUnchanged('expense','gas','Gas','Gas for Home');
+    renameIfUnchanged('expense','food','Food','Food/Groceries');
+    renameIfUnchanged('expense','expenses_misc','Expenses','Weekly Play Money');
+    parsed.version = 6;
+  }
+  if((parsed.version||1) < 7){
+    // Group existing expense categories the same way the built-in defaults
+    // are grouped; anything unrecognized (a custom category) lands in Other.
+    const groupById = {
+      mortgage:'Housing', savings_transfer:'Savings', daycare:'Childcare',
+      internet:'Utilities', electric:'Utilities', water:'Utilities', gas:'Utilities', trash:'Utilities',
+      food:'Food', insurance:'Insurance', mobile:'Subscriptions', streaming:'Subscriptions',
+      expenses_misc:'Personal', oil:'Transportation', transportation:'Transportation', gas_vehicles:'Transportation',
+      credit_card_1:'Debt', credit_card_2:'Debt', other_expense:'Personal',
+    };
+    for(const c of (parsed.categories.expense||[])){
+      if(!c.group) c.group = groupById[c.id] || 'Other';
+    }
+    parsed.version = 7;
+  }
+  return parsed;
+}
+
+// Categories introduced after initial release, added once to any saved data
+// that predates them. NOT the same as DEFAULT_CATEGORIES (that would also
+// resurrect built-in categories a user deliberately deleted) — this list only
+// ever grows when a *new* built-in category is introduced in an update.
+const CATEGORIES_ADDED_LATER = [
+  { kind:'expense', id:'oil', name:'Oil', estimate:0, recurring:true, dueDay:null, frequency:'monthly', biweeklyAnchor:null, monthlyWeek:1, anchorMonth:0 },
+  { kind:'expense', id:'transportation', name:'Transportation', estimate:0, recurring:true, dueDay:null, frequency:'monthly', biweeklyAnchor:null, monthlyWeek:1, anchorMonth:0 },
+  { kind:'expense', id:'gas_vehicles', name:'Gas for Vehicles', estimate:0, recurring:true, dueDay:null, frequency:'monthly', biweeklyAnchor:null, monthlyWeek:1, anchorMonth:0 },
+];
+function ensureBaselineCategories(parsed){
+  if(!parsed._seenCategoryIds) parsed._seenCategoryIds = [];
+  for(const want of CATEGORIES_ADDED_LATER){
+    const exists = parsed.categories[want.kind].find(c=>c.id===want.id);
+    const alreadyHandled = parsed._seenCategoryIds.includes(want.id);
+    if(!exists && !alreadyHandled){
+      const { kind, ...cat } = want;
+      parsed.categories[kind].push(cat);
+    }
+    if(!alreadyHandled) parsed._seenCategoryIds.push(want.id);
+  }
+  return parsed;
+}
+
+function saveState(){
+  localStorage.setItem(STORAGE_KEY, JSON.stringify(state));
+}
+
+/* =========================================================================
+   DATE UTILITIES
+   ========================================================================= */
+function pad2(n){ return String(n).padStart(2,'0'); }
+function toKey(date){ return `${date.getFullYear()}-${pad2(date.getMonth()+1)}-${pad2(date.getDate())}`; }
+function parseKey(key){ const [y,m,d] = key.split('-').map(Number); return new Date(y, m-1, d); }
+function monthKeyOf(date){ return `${date.getFullYear()}-${pad2(date.getMonth()+1)}`; }
+function parseMonthKey(key){ const [y,m] = key.split('-').map(Number); return { year:y, month:m-1 }; }
+
+function fridaysInMonth(year, month){
+  const out = [];
+  const d = new Date(year, month, 1);
+  while(d.getMonth() === month){
+    if(d.getDay() === 5) out.push(new Date(d));
+    d.setDate(d.getDate()+1);
+  }
+  return out;
+}
+
+function nearestFriday(date){
+  const d = new Date(date);
+  const day = d.getDay(); // 0 Sun .. 6 Sat
+  const diff = (5 - day + 7) % 7;
+  d.setDate(d.getDate() + diff);
+  return d;
+}
+
+const MONTH_NAMES = ['January','February','March','April','May','June','July','August','September','October','November','December'];
+const money = (n) => {
+  const v = Number(n)||0;
+  const sign = v < 0 ? '-' : '';
+  return sign + '$' + Math.abs(v).toLocaleString(undefined,{minimumFractionDigits:0, maximumFractionDigits:0});
+};
+// All dollar fields store whole dollars only — no cents.
+function wholeDollar(value){
+  const n = Math.round(Number(value));
+  return Number.isFinite(n) ? n : 0;
+}
+
+/* =========================================================================
+   STATE ACCESSORS
+   ========================================================================= */
+function ensureWeek(key){
+  if(!state.weeks[key]){
+    const entry = { income:{}, expense:{} };
+    for(const a of ACCOUNTS) entry[a.id] = null;
+    for(const c of state.categories.income) entry.income[c.id] = { override:null, actual:null, checked:false };
+    for(const c of state.categories.expense) entry.expense[c.id] = { override:null, actual:null, checked:false };
+    state.weeks[key] = entry;
+  } else {
+    // reconcile categories/accounts added/removed since this week was created
+    const w = state.weeks[key];
+    for(const a of ACCOUNTS) if(w[a.id]===undefined) w[a.id] = null;
+    for(const c of state.categories.income) if(!w.income[c.id]) w.income[c.id] = { override:null, actual:null, checked:false };
+    for(const c of state.categories.expense) if(!w.expense[c.id]) w.expense[c.id] = { override:null, actual:null, checked:false };
+  }
+  return state.weeks[key];
+}
+
+// The recurring weekly amount set once in Budget for this category.
+function categoryDefault(kind, id){
+  const c = state.categories[kind].find(c=>c.id===id);
+  return c ? (Number(c.estimate)||0) : 0;
+}
+// Categories can be scheduled weekly (every Friday), biweekly (every other
+// Friday, counted from an anchor pay-week), monthly (a specific Friday-of-
+// month, e.g. "the 1st Friday"), quarterly, biannually, or yearly (all three
+// of the latter: a specific Friday-of-month, in a month that recurs every 3,
+// 6, or 12 months from an anchor month). Off-schedule weeks plan for $0
+// unless that week has its own override.
+function categoryAppliesToWeek(c, weekKey){
+  const freq = c.frequency || 'monthly';
+  if(freq === 'weekly') return true;
+  if(freq === 'biweekly'){
+    if(!c.biweeklyAnchor) return true;
+    const diffDays = Math.round((parseKey(weekKey) - parseKey(c.biweeklyAnchor)) / 86400000);
+    const diffWeeks = Math.round(diffDays / 7);
+    return ((diffWeeks % 2) + 2) % 2 === 0;
+  }
+  const d = parseKey(weekKey);
+  if(freq === 'quarterly' || freq === 'biannual' || freq === 'yearly'){
+    const interval = freq === 'quarterly' ? 3 : freq === 'biannual' ? 6 : 12;
+    const anchorMonth = c.anchorMonth!=null ? c.anchorMonth : 0;
+    const diff = ((d.getMonth() - anchorMonth) % interval + interval) % interval;
+    if(diff !== 0) return false;
+  } else if(freq !== 'monthly'){
+    return true;
+  }
+  const fridays = fridaysInMonth(d.getFullYear(), d.getMonth()).map(toKey);
+  const idx = fridays.indexOf(weekKey);
+  if(idx === -1) return false;
+  const which = c.monthlyWeek || 1;
+  return which === 'last' ? idx === fridays.length-1 : idx === (Number(which)-1);
+}
+// What a week actually plans to use: a per-week override if this specific
+// week was changed; otherwise the live recurring default from Budget, unless
+// the category's schedule (biweekly/monthly) skips this particular week.
+function effectiveEstimate(kind, id, entry, weekKey){
+  if(entry.override!==null && entry.override!==undefined && entry.override!=='') return Number(entry.override)||0;
+  if(weekKey){
+    const c = state.categories[kind].find(c=>c.id===id);
+    if(c && !categoryAppliesToWeek(c, weekKey)) return 0;
+  }
+  return categoryDefault(kind, id);
+}
+function isOverridden(entry){
+  return entry.override!==null && entry.override!==undefined && entry.override!=='';
+}
+
+function accountsHaveSnapshot(w){
+  return ACCOUNTS.some(a => w[a.id]!==null && w[a.id]!==undefined);
+}
+
+function ensureMonthStart(monthKey){
+  if(state.months[monthKey]) return state.months[monthKey];
+  // find most recent snapshot strictly before this month
+  const { year, month } = parseMonthKey(monthKey);
+  const prevSnapshot = findLatestSnapshotBefore(new Date(year, month, 1));
+  const start = {};
+  for(const a of ACCOUNTS) start[a.id] = prevSnapshot ? prevSnapshot[a.id] : (Number(state.accounts[a.id])||0);
+  const rec = { start, startCapturedAt: new Date().toISOString() };
+  state.months[monthKey] = rec;
+  saveState();
+  return rec;
+}
+
+function findLatestSnapshotBefore(date){
+  const keys = Object.keys(state.weeks).filter(k => parseKey(k) < date && accountsHaveSnapshot(state.weeks[k]));
+  if(keys.length===0) return null;
+  keys.sort();
+  const last = state.weeks[keys[keys.length-1]];
+  const out = {};
+  for(const a of ACCOUNTS) out[a.id] = last[a.id]!==null ? last[a.id] : (Number(state.accounts[a.id])||0);
+  return out;
+}
+
+function findLatestSnapshotWithin(monthKey){
+  const { year, month } = parseMonthKey(monthKey);
+  const fridays = fridaysInMonth(year, month).map(toKey);
+  let found = null;
+  for(const k of fridays){
+    const w = state.weeks[k];
+    if(w && accountsHaveSnapshot(w)){
+      found = { key:k };
+      for(const a of ACCOUNTS) found[a.id] = w[a.id];
+    }
+  }
+  return found;
+}
+
+/* =========================================================================
+   CALCULATIONS
+   ========================================================================= */
+function weekTotals(key){
+  const w = ensureWeek(key);
+  let estIncome=0, actIncome=0, estExpense=0, actExpense=0;
+  for(const c of state.categories.income){
+    const e = w.income[c.id];
+    const est = effectiveEstimate('income', c.id, e, key);
+    estIncome += est;
+    if(e.checked) actIncome += (e.actual!==null && e.actual!=='' ) ? Number(e.actual)||0 : est;
+  }
+  for(const c of state.categories.expense){
+    const e = w.expense[c.id];
+    const est = effectiveEstimate('expense', c.id, e, key);
+    estExpense += est;
+    if(e.checked) actExpense += (e.actual!==null && e.actual!=='') ? Number(e.actual)||0 : est;
+  }
+  return {
+    estIncome, actIncome, estExpense, actExpense,
+    estNet: estIncome - estExpense,
+    actNet: actIncome - actExpense
+  };
+}
+
+function monthTotals(monthKey){
+  const { year, month } = parseMonthKey(monthKey);
+  const fridays = fridaysInMonth(year, month);
+  let estIncome=0, actIncome=0, estExpense=0, actExpense=0;
+  for(const f of fridays){
+    const t = weekTotals(toKey(f));
+    estIncome += t.estIncome; actIncome += t.actIncome;
+    estExpense += t.estExpense; actExpense += t.actExpense;
+  }
+  return {
+    estIncome, actIncome, estExpense, actExpense,
+    estNet: estIncome-estExpense, actNet: actIncome-actExpense,
+    weekCount: fridays.length
+  };
+}
+
+// Splits this month's expenses into what's still outstanding (not checked
+// off, so still owed — planned amount) vs what's already been paid (checked
+// off — the actual amount that was frozen in when it was checked).
+function monthExpensePaidStatus(monthKey){
+  const { year, month } = parseMonthKey(monthKey);
+  const fridays = fridaysInMonth(year, month).map(toKey);
+  let unpaid = 0, paid = 0;
+  for(const k of fridays){
+    const w = ensureWeek(k);
+    for(const c of state.categories.expense){
+      const e = w.expense[c.id];
+      const est = effectiveEstimate('expense', c.id, e, k);
+      if(e.checked){
+        paid += (e.actual!==null && e.actual!=='') ? Number(e.actual)||0 : est;
+      } else {
+        unpaid += est;
+      }
+    }
+  }
+  return { unpaid, paid };
+}
+
+// Same idea for income: what's still expected but not checked off yet (still
+// to collect, at its planned amount) vs what's already been received
+// (checked off — the actual amount frozen in when it was checked).
+function monthIncomeCollectedStatus(monthKey){
+  const { year, month } = parseMonthKey(monthKey);
+  const fridays = fridaysInMonth(year, month).map(toKey);
+  let remaining = 0, collected = 0;
+  for(const k of fridays){
+    const w = ensureWeek(k);
+    for(const c of state.categories.income){
+      const e = w.income[c.id];
+      const est = effectiveEstimate('income', c.id, e, k);
+      if(e.checked){
+        collected += (e.actual!==null && e.actual!=='') ? Number(e.actual)||0 : est;
+      } else {
+        remaining += est;
+      }
+    }
+  }
+  return { remaining, collected };
+}
+
+function sumAccounts(obj){
+  return ACCOUNTS.reduce((sum,a) => sum + (Number(obj[a.id])||0), 0);
+}
+function currentAccountsTotal(){
+  return sumAccounts(state.accounts);
+}
+
+function monthSummary(monthKey){
+  const start = ensureMonthStart(monthKey);
+  const totals = monthTotals(monthKey);
+  const startTotal = sumAccounts(start.start);
+  const estEnd = startTotal + totals.estNet;
+  const snap = findLatestSnapshotWithin(monthKey);
+  const today = new Date();
+  let actEnd = null;
+  if(snap){
+    const merged = {};
+    for(const a of ACCOUNTS) merged[a.id] = snap[a.id]!==null && snap[a.id]!==undefined ? snap[a.id] : start.start[a.id];
+    actEnd = sumAccounts(merged);
+  } else if(monthKey === monthKeyOf(today)){
+    actEnd = currentAccountsTotal();
+  }
+  const variance = actEnd!==null ? (actEnd - estEnd) : null;
+  return { start, startTotal, totals, estEnd, actEnd, variance, hasActual: actEnd!==null };
+}
+
+function projectFutureMonths(count){
+  const today = new Date();
+  const curKey = monthKeyOf(today);
+  let runningBalance = currentAccountsTotal();
+  // walk from current month forward using actual monthly totals where known,
+  // else each category's own schedule (weekly/biweekly/monthly all differ)
+  const out = [];
+  let y = today.getFullYear(), m = today.getMonth();
+  for(let i=0;i<count;i++){
+    const key = `${y}-${pad2(m+1)}`;
+    if(key === curKey){
+      const summary = monthSummary(key);
+      runningBalance = summary.hasActual ? summary.actEnd : summary.estEnd;
+      out.push({ key, label: MONTH_NAMES[m], balance: runningBalance, estimated: !summary.hasActual });
+    } else {
+      runningBalance = runningBalance + monthTotals(key).estNet;
+      out.push({ key, label: MONTH_NAMES[m], balance: runningBalance, estimated: true });
+    }
+    m++; if(m>11){m=0; y++;}
+  }
+  return out;
+}
+
+/* =========================================================================
+   NAV STATE
+   ========================================================================= */
+let currentWeekKey = toKey(nearestFriday(new Date()));
+let currentMonthKey = monthKeyOf(new Date());
+let focusedWeekKey = defaultFocusedWeek(currentMonthKey);
+let activeTab = 'dashboard';
+
+function defaultFocusedWeek(monthKey){
+  const { year, month } = parseMonthKey(monthKey);
+  const todayFriKey = currentWeekKeyForToday();
+  const [ty, tm] = todayFriKey.split('-').map(Number);
+  if(ty===year && (tm-1)===month) return todayFriKey;
+  const fridays = fridaysInMonth(year, month);
+  return fridays.length ? toKey(fridays[0]) : null;
+}
+
+function focusWeek(key){
+  focusedWeekKey = key;
+  renderMonthly();
+  const card = document.getElementById('mo-spreadsheet-card');
+  if(card) card.scrollIntoView({block:'start', behavior:'smooth'});
+  const cell = document.querySelector(`#mo-grid [data-week="${key}"]`);
+  if(cell) cell.scrollIntoView({inline:'center', block:'nearest', behavior:'smooth'});
+}
+
+function toggleCalendarInfo(){
+  const el = document.getElementById('cal-info-panel');
+  if(el) el.classList.toggle('open');
+}
+
+function showTab(tab){
+  activeTab = tab;
+  document.querySelectorAll('.view').forEach(v=>v.classList.remove('active'));
+  document.getElementById('view-'+tab).classList.add('active');
+  document.querySelectorAll('.tabbar button').forEach(b=>b.classList.toggle('active', b.dataset.tab===tab));
+  renderAll();
+  window.scrollTo({top:0});
+}
+
+function jumpToCurrentWeek(){ currentWeekKey = toKey(nearestFriday(new Date())); renderWeekly(); }
+function jumpToCurrentMonth(){ currentMonthKey = monthKeyOf(new Date()); focusedWeekKey = defaultFocusedWeek(currentMonthKey); renderMonthly(); }
+
+function stepWeek(delta){
+  const d = parseKey(currentWeekKey);
+  d.setDate(d.getDate() + delta*7);
+  currentWeekKey = toKey(d);
+  renderWeekly();
+}
+function stepMonth(delta){
+  const { year, month } = parseMonthKey(currentMonthKey);
+  let m = month + delta, y = year;
+  if(m<0){ m=11; y--; } else if(m>11){ m=0; y++; }
+  currentMonthKey = `${y}-${pad2(m+1)}`;
+  focusedWeekKey = defaultFocusedWeek(currentMonthKey);
+  renderMonthly();
+}
+
+/* =========================================================================
+   RENDER: DASHBOARD
+   ========================================================================= */
+function renderDashboard(){
+  const total = currentAccountsTotal();
+  document.getElementById('dash-balances').innerHTML = ACCOUNTS.map(a => `
+    <div class="bal-tile"><div class="lbl">${a.name}</div><div class="val num ${a.debt?'neg':''}">${money(Number(state.accounts[a.id])||0)}</div></div>
+  `).join('') + `<div class="bal-tile bal-tile-total"><div class="lbl">Total</div><div class="val num ${total<0?'neg':''}">${money(total)}</div></div>`;
+  document.getElementById('hdr-total').textContent = money(total);
+  document.getElementById('dash-updated').textContent = state.accounts.updatedAt
+    ? 'Last updated ' + new Date(state.accounts.updatedAt).toLocaleString(undefined,{month:'short',day:'numeric',hour:'numeric',minute:'2-digit'})
+    : 'Not yet updated';
+
+  // month card
+  const mk = monthKeyOf(new Date());
+  const acctTotal = currentAccountsTotal();
+  const expStatus = monthExpensePaidStatus(mk);
+  const incStatus = monthIncomeCollectedStatus(mk);
+  const estimatedEnd = acctTotal + incStatus.remaining - expStatus.unpaid;
+  document.getElementById('dash-month-card').innerHTML = `
+    <div class="row"><h3>${MONTH_NAMES[parseMonthKey(mk).month]}</h3></div>
+    <div class="faint" style="font-size:.72rem; margin-top:2px;">What you'll have left once everything still due this month comes in and goes out.</div>
+    <div class="row" style="margin-top:12px;"><span class="muted">Starting balance (today)</span><span class="num">${money(acctTotal)}</span></div>
+    <div class="row" style="margin-top:8px;"><span class="muted">Income Left to Collect</span><span class="num pos">+${money(incStatus.remaining)}</span></div>
+    <div class="row" style="margin-top:8px;"><span class="muted">Expenses Unpaid</span><span class="num neg">-${money(expStatus.unpaid)}</span></div>
+    <div class="row" style="margin-top:8px;"><span class="muted">Expenses Paid</span><span class="num">${money(expStatus.paid)}</span></div>
+    <div class="row" style="margin-top:8px;"><span class="muted">After Bills Paid</span><span class="num ${estimatedEnd<0?'neg':''}">${money(estimatedEnd)}</span></div>
+    <div class="calc-note">Starting balance is your accounts total right now (today). Income Left to Collect is every income item this month you haven't checked off yet, at its planned amount. Expenses Unpaid is every expense this month you haven't checked off yet (Weekly/Monthly), at its planned amount. Expenses Paid is every expense you have checked off, at what you actually paid (shown for reference — it's already reflected in your starting balance). After Bills Paid = starting balance + income left to collect − expenses unpaid — what you'll be left with once everything still due this month comes in and goes out.</div>
+  `;
+
+  // week card
+  const wk = currentWeekKeyForToday();
+  const t = weekTotals(wk);
+  document.getElementById('dash-week-card').innerHTML = `
+    <div class="row"><h3>Week ending ${formatDateShort(parseKey(wk))}</h3></div>
+    <div class="row" style="margin-top:10px;"><span class="muted">Estimated net</span><span class="num ${t.estNet>=0?'pos':'neg'}">${money(t.estNet)}</span></div>
+    <div class="row" style="margin-top:8px;"><span class="muted">Actual net (checked)</span><span class="num ${t.actNet>=0?'pos':'neg'}">${money(t.actNet)}</span></div>
+    <button class="linkbtn" style="padding-left:0; margin-top:6px;" onclick="currentWeekKey='${wk}'; showTab('weekly');">Open this week &rarr;</button>
+    <div class="calc-note">Estimated net = planned income − planned expenses for this week, based on each category's schedule (weekly, biweekly, monthly, quarterly, bi-annual). Actual net only counts items you've checked off — unchecked items don't count yet.</div>
+  `;
+
+  // projections
+  const proj = projectFutureMonths(6);
+  document.getElementById('dash-projection').innerHTML = proj.map(p => `
+    <div class="mini-item">
+      <div><div class="mtitle">${p.label}</div><div class="msub">${p.estimated ? 'projected' : 'current'}</div></div>
+      <div class="num">${money(p.balance)}</div>
+    </div>
+  `).join('') + `<div class="calc-note" style="margin-top:10px;">Each month starts from the previous month's balance and adds that month's planned income minus planned expenses — following each category's own schedule, not just this week's plan.</div>`;
+}
+
+function currentWeekKeyForToday(){ return toKey(nearestFriday(new Date())); }
+
+function formatDateShort(d){ return d.toLocaleDateString(undefined,{month:'short', day:'numeric'}); }
+
+function varianceBadgeHTML(variance){
+  if(variance===null) return `<span class="variance-badge neu">No data yet</span>`;
+  if(Math.abs(variance) < 0.005) return `<span class="variance-badge neu">On target</span>`;
+  const cls = variance>0 ? 'pos':'neg';
+  const label = variance>0 ? 'ahead' : 'behind';
+  return `<span class="variance-badge ${cls}">${money(Math.abs(variance))} ${label}</span>`;
+}
+
+/* =========================================================================
+   RENDER: WEEKLY
+   ========================================================================= */
+function renderWeekly(){
+  const d = parseKey(currentWeekKey);
+  document.getElementById('week-title').textContent = 'Week of ' + formatDateShort(new Date(d.getFullYear(),d.getMonth(),d.getDate()-6)) + ' – ' + formatDateShort(d);
+  document.getElementById('week-sub').textContent = MONTH_NAMES[d.getMonth()] + ' ' + d.getFullYear();
+
+  const w = ensureWeek(currentWeekKey);
+
+  document.getElementById('week-income').innerHTML = renderCatRows('income', currentWeekKey);
+  document.getElementById('week-expense').innerHTML = renderCatRows('expense', currentWeekKey);
+
+  const t = weekTotals(currentWeekKey);
+  document.getElementById('wk-inc-est').textContent = money(t.estIncome);
+  document.getElementById('wk-inc-act').textContent = money(t.actIncome);
+  document.getElementById('wk-exp-est').textContent = money(t.estExpense);
+  document.getElementById('wk-exp-act').textContent = money(t.actExpense);
+  document.getElementById('wk-net-est').textContent = money(t.estNet);
+  document.getElementById('wk-net-act').textContent = money(t.actNet);
+
+  document.getElementById('wk-account-rows').innerHTML = ACCOUNTS.map(a => `
+    <div class="bal-input-row">
+      <span>${a.name}</span>
+      <span class="dollar-field"><input type="number" step="1" inputmode="numeric" id="${accountDomId(a.id)}" value="${w[a.id]!==null?w[a.id]:''}" oninput="updateWeekBalance()"></span>
+    </div>
+  `).join('');
+}
+
+function renderCatRows(kind, weekKey){
+  const cats = state.categories[kind];
+  if(cats.length===0) return `<div class="empty-hint">No categories yet — add some in Budget.</div>`;
+  if(kind!=='expense') return cats.map(c => weeklyCatRowHtml(kind, c, weekKey)).join('');
+
+  const byGroup = {};
+  for(const c of cats){
+    const g = expenseGroupOf(c);
+    (byGroup[g] = byGroup[g] || []).push(c);
+  }
+  return EXPENSE_GROUPS.filter(g => byGroup[g]).map(g => `
+    <div class="wk-group-header">${g}</div>
+    ${byGroup[g].map(c => weeklyCatRowHtml(kind, c, weekKey)).join('')}
+  `).join('');
+}
+
+function weeklyCatRowHtml(kind, c, weekKey){
+  const w = ensureWeek(weekKey);
+  const e = w[kind][c.id];
+  const est = effectiveEstimate(kind, c.id, e, weekKey);
+  const showBadge = c.recurring!==false && isOverridden(e);
+  const offSchedule = c.recurring!==false && !isOverridden(e) && !categoryAppliesToWeek(c, weekKey);
+  const dueBadge = c.dueDay ? `<span class="due-badge">Due ${ordinal(c.dueDay)}</span>` : '';
+  const freqBadge = (c.recurring!==false && (c.frequency||'monthly')!=='monthly') ? `<span class="due-badge">${frequencyLabel(c)}</span>` : '';
+  return `
+    <div class="cat-row">
+      <input type="checkbox" ${e.checked?'checked':''} onchange="onCheckChange('${weekKey}','${kind}','${c.id}', this.checked)">
+      <div class="cname">${escapeHTML(c.name)}${dueBadge}${freqBadge}</div>
+      <div class="plan-wrap${showBadge?' is-override':''}${offSchedule?' is-off-schedule':''}">
+        ${showBadge ? `<button class="ov-reset" title="Reset to recurring plan" onclick="onFieldChange('${weekKey}','${kind}','${c.id}','override','')">&#8630;</button>` : ''}
+        <span class="dollar-field"><input type="number" step="1" inputmode="numeric" value="${est}" onclick="this.select()" onchange="onFieldChange('${weekKey}','${kind}','${c.id}','override', this.value)"></span>
+      </div>
+      <span class="dollar-field"><input type="number" step="1" inputmode="numeric" value="${e.actual!==null?e.actual:''}" placeholder="${est}" onchange="onFieldChange('${weekKey}','${kind}','${c.id}','actual', this.value)"></span>
+    </div>`;
+}
+
+function onCheckChange(weekKey, kind, id, checked){
+  const w = ensureWeek(weekKey);
+  const e = w[kind][id];
+  e.checked = checked;
+  // freeze the plan amount into "actual" the moment something's marked done,
+  // so later changes to the recurring plan don't rewrite history
+  if(checked && (e.actual===null || e.actual==='')){
+    e.actual = effectiveEstimate(kind, id, e, weekKey);
+  }
+  saveState();
+  deferRenderAll();
+}
+function onFieldChange(weekKey, kind, id, field, value){
+  const w = ensureWeek(weekKey);
+  w[kind][id][field] = value===''? null : wholeDollar(value);
+  saveState();
+  deferRenderAll();
+}
+
+function accountDomId(accountId){ return 'wk-'+accountId.toLowerCase(); }
+
+// `updates` is a partial object { <accountId>: number|null, ... } — only the
+// keys being changed need to be present.
+function applyWeekBalance(weekKey, updates){
+  const w = ensureWeek(weekKey);
+  for(const a of ACCOUNTS){
+    if(updates[a.id] !== undefined) w[a.id] = normalizeAccountValue(a.id, updates[a.id]);
+  }
+  // if this is the most recent known snapshot overall, it becomes the "current" balance
+  if(isMostRecentSnapshot(weekKey)){
+    for(const a of ACCOUNTS) if(w[a.id]!==null) state.accounts[a.id] = w[a.id];
+    state.accounts.updatedAt = new Date().toISOString();
+  }
+  saveState();
+}
+
+function updateWeekBalance(){
+  const updates = {};
+  for(const a of ACCOUNTS){
+    const val = document.getElementById(accountDomId(a.id)).value;
+    updates[a.id] = val===''? null : wholeDollar(val);
+  }
+  applyWeekBalance(currentWeekKey, updates);
+  deferRenderAll();
+}
+
+function onGridBalance(weekKey, field, value){
+  const val = value===''? null : wholeDollar(value);
+  applyWeekBalance(weekKey, { [field]: val });
+  deferRenderAll();
+}
+
+function isMostRecentSnapshot(key){
+  const keys = Object.keys(state.weeks).filter(k => accountsHaveSnapshot(state.weeks[k]));
+  keys.sort();
+  return keys.length===0 || keys[keys.length-1] <= key;
+}
+
+/* =========================================================================
+   RENDER: MONTHLY
+   ========================================================================= */
+function renderMonthly(){
+  const { year, month } = parseMonthKey(currentMonthKey);
+  document.getElementById('month-title').textContent = MONTH_NAMES[month];
+  document.getElementById('month-sub').textContent = String(year);
+
+  renderCalendarStrip(year, month);
+
+  const s = monthSummary(currentMonthKey);
+  document.getElementById('mo-start').textContent = money(s.startTotal);
+  document.getElementById('mo-est-end').textContent = money(s.estEnd);
+  document.getElementById('mo-act-end').textContent = s.hasActual ? money(s.actEnd) : '—';
+  document.getElementById('mo-variance').innerHTML = varianceBadgeHTML(s.variance);
+
+  const fridays = fridaysInMonth(year, month);
+  const keys = fridays.map(toKey);
+  const todayKey = currentWeekKeyForToday();
+  const colClasses = (k) => {
+    const cls = [];
+    if(k===todayKey) cls.push('col-today');
+    if(k===focusedWeekKey) cls.push('col-focus');
+    return cls;
+  };
+
+  let html = '<thead><tr><th>Category</th>';
+  keys.forEach(k=> html += `<th class="${colClasses(k).join(' ')}" data-week="${k}">${formatDateShort(parseKey(k))}</th>`);
+  html += `<th class="total-col">Total</th></tr></thead><tbody>`;
+
+  const catCell = (k, kind, c) => {
+    const w = ensureWeek(k);
+    const e = w[kind][c.id];
+    const est = effectiveEstimate(kind, c.id, e, k);
+    const showBadge = c.recurring!==false && isOverridden(e);
+    const offSchedule = c.recurring!==false && !isOverridden(e) && !categoryAppliesToWeek(c, k);
+    const isUnpaid = kind==='expense' && !e.checked && est !== 0;
+    const cls = ['gcell', ...colClasses(k)];
+    if(showBadge) cls.push('is-override');
+    if(offSchedule) cls.push('is-off-schedule');
+    if(isUnpaid) cls.push('is-unpaid');
+    if(e.checked) cls.push(kind==='income' ? 'g-checked-inc' : 'g-checked-exp');
+    return `<td class="${cls.join(' ')}" data-week="${k}" ${isUnpaid?'title="Unpaid — check it off once paid"':''}>
+      ${showBadge ? `<button class="ov-reset" title="Reset to recurring plan" onclick="event.stopPropagation(); onFieldChange('${k}','${kind}','${c.id}','override','')">&#8630;</button>` : ''}
+      <div class="gwrap">
+        <input type="checkbox" ${e.checked?'checked':''} onchange="onCheckChange('${k}','${kind}','${c.id}', this.checked)">
+        <span class="dollar-field tight"><input type="number" step="1" inputmode="numeric" value="${est}" onclick="this.select()" onchange="onFieldChange('${k}','${kind}','${c.id}','override', this.value)"></span>
+      </div>
+    </td>`;
+  };
+
+  html += `<tr class="grp"><td colspan="${keys.length+2}">Income</td></tr>`;
+  for(const c of state.categories.income){
+    const dueInline = c.dueDay ? ` <span class="due-badge-inline">(${ordinal(c.dueDay)})</span>` : '';
+    const freqInline = (c.recurring!==false && (c.frequency||'monthly')!=='monthly') ? ` <span class="due-badge-inline">(${frequencyLabel(c)})</span>` : '';
+    html += `<tr><td>${escapeHTML(c.name)}${dueInline}${freqInline}</td>`;
+    let rowTotal = 0;
+    for(const k of keys){
+      const w = ensureWeek(k);
+      const e = w.income[c.id];
+      const est = effectiveEstimate('income', c.id, e, k);
+      rowTotal += e.checked ? (e.actual!==null?Number(e.actual):est) : est;
+      html += catCell(k, 'income', c);
+    }
+    html += `<td class="total-col">${money(rowTotal)}</td></tr>`;
+  }
+
+  html += `<tr class="grp"><td colspan="${keys.length+2}">Expenses</td></tr>`;
+  const expByGroup = {};
+  for(const c of state.categories.expense){
+    const g = expenseGroupOf(c);
+    (expByGroup[g] = expByGroup[g] || []).push(c);
+  }
+  for(const g of EXPENSE_GROUPS.filter(g => expByGroup[g])){
+    html += `<tr class="grp-sub"><td colspan="${keys.length+2}">${g}</td></tr>`;
+    for(const c of expByGroup[g]){
+      const dueInline = c.dueDay ? ` <span class="due-badge-inline">(${ordinal(c.dueDay)})</span>` : '';
+      const freqInline = (c.recurring!==false && (c.frequency||'monthly')!=='monthly') ? ` <span class="due-badge-inline">(${frequencyLabel(c)})</span>` : '';
+      html += `<tr><td>${escapeHTML(c.name)}${dueInline}${freqInline}</td>`;
+      let rowTotal = 0;
+      for(const k of keys){
+        const w = ensureWeek(k);
+        const e = w.expense[c.id];
+        const est = effectiveEstimate('expense', c.id, e, k);
+        rowTotal += e.checked ? (e.actual!==null?Number(e.actual):est) : est;
+        html += catCell(k, 'expense', c);
+      }
+      html += `<td class="total-col">${money(rowTotal)}</td></tr>`;
+    }
+  }
+
+  html += `<tr class="row-total"><td>Net Total</td>`;
+  let monthNetRunning = 0;
+  for(const k of keys){
+    const t = weekTotals(k);
+    monthNetRunning += t.estNet;
+    html += `<td class="${colClasses(k).join(' ')}">${money(t.estNet)}</td>`;
+  }
+  html += `<td class="total-col">${money(monthNetRunning)}</td></tr>`;
+
+  html += `<tr class="row-balance"><td>Running Balance</td>`;
+  let running = s.startTotal;
+  for(const k of keys){
+    const t = weekTotals(k);
+    running += t.estNet;
+    html += `<td class="${colClasses(k).join(' ')}">${money(running)}</td>`;
+  }
+  html += `<td class="total-col">${money(running)}</td></tr>`;
+
+  html += '</tbody>';
+  document.getElementById('mo-grid').innerHTML = html;
+}
+
+// Any expense that applies this week, isn't checked off, and isn't $0 —
+// i.e. the same rule the spreadsheet grid uses to highlight a cell amber.
+function weekHasUnpaidExpense(weekKey){
+  const w = ensureWeek(weekKey);
+  return state.categories.expense.some(c => {
+    const e = w.expense[c.id];
+    return !e.checked && effectiveEstimate('expense', c.id, e, weekKey) !== 0;
+  });
+}
+
+// Recurring income/expense categories with a Due day set on that specific
+// calendar day (not just whichever Friday their plan happens to land on).
+// A due day past the end of a shorter month lands on that month's last day.
+function dueItemsForDay(year, month, day){
+  const daysInMonth = new Date(year, month+1, 0).getDate();
+  const items = [];
+  for(const kind of ['income','expense']){
+    for(const c of state.categories[kind]){
+      if(c.recurring===false || !c.dueDay) continue;
+      if(Math.min(c.dueDay, daysInMonth) === day){
+        items.push({ kind, name:c.name, amount:Number(c.estimate)||0 });
+      }
+    }
+  }
+  return items;
+}
+
+function renderCalendarStrip(year, month){
+  const startPad = new Date(year, month, 1).getDay();
+  const daysInMonth = new Date(year, month+1, 0).getDate();
+  const todayKey = toKey(new Date());
+  let html = '';
+  for(let i=0;i<startPad;i++) html += `<div class="cal-day empty"></div>`;
+  for(let d=1; d<=daysInMonth; d++){
+    const date = new Date(year, month, d);
+    const key = toKey(date);
+    const isToday = key===todayKey;
+    const dueItems = dueItemsForDay(year, month, d);
+    const hasDue = dueItems.length > 0;
+    const dueNet = dueItems.reduce((s,i)=> s + (i.kind==='income'?i.amount:-i.amount), 0);
+    // Tooltip always shows every item plus the added-up total — the "hover
+    // to see it all added up" view. The cell itself never sums anything for
+    // a plain day; only the Friday total is a real sum.
+    const dueTitle = dueItems.map(i => `${i.name} ${money(i.kind==='income'?i.amount:-i.amount)}`).join(', ')
+      + (hasDue ? ` — Total ${money(dueNet)}` : '');
+    if(date.getDay()===5){
+      const t = weekTotals(key);
+      const unpaid = weekHasUnpaidExpense(key);
+      const cls = ['cal-day','cal-fri', t.estNet>=0?'pos-week':'neg-week'];
+      if(isToday) cls.push('cal-today');
+      if(key===focusedWeekKey) cls.push('cal-selected');
+      if(unpaid) cls.push('has-unpaid');
+      if(hasDue) cls.push('has-due-marker');
+      const titleParts = [`Week total (added up): ${money(t.estNet)}`];
+      if(unpaid) titleParts.push('Has an unpaid expense');
+      if(hasDue) titleParts.push('Also due today: '+dueTitle);
+      html += `<div class="${cls.join(' ')}" onclick="focusWeek('${key}')" title="${titleParts.join(' — ')}">
+        <div class="dnum">${d}</div>
+        <div class="damt damt-total">&Sigma;${money(t.estNet)}</div>
+      </div>`;
+    } else {
+      // Individual days show each item's own amount, not added together.
+      const shown = dueItems.slice(0,2);
+      const extra = dueItems.length - shown.length;
+      const itemLines = shown.map(i => `<div class="damt-item ${i.kind==='income'?'pos-amt':'neg-amt'}">${money(i.kind==='income'?i.amount:-i.amount)}</div>`).join('');
+      const moreLine = extra>0 ? `<div class="damt-item damt-more">+${extra}</div>` : '';
+      const cls = ['cal-day']; if(isToday) cls.push('cal-today'); if(hasDue) cls.push('has-due');
+      const clickAttr = hasDue ? ` onclick="focusWeek('${toKey(nearestFriday(date))}')"` : '';
+      html += `<div class="${cls.join(' ')}"${clickAttr} ${hasDue?`title="${dueTitle}"`:''}>
+        <div class="dnum">${d}</div>${itemLines}${moreLine}
+      </div>`;
+    }
+  }
+  document.getElementById('mo-calendar').innerHTML = html;
+}
+
+/* =========================================================================
+   RENDER: BUDGET
+   ========================================================================= */
+function renderBudget(){
+  renderBudgetAccounts();
+  document.getElementById('budget-income').innerHTML = renderBudgetRows('income');
+  document.getElementById('budget-expense').innerHTML = renderBudgetRows('expense');
+}
+
+function renderBudgetAccounts(){
+  const wk = currentWeekKeyForToday();
+  const w = ensureWeek(wk);
+  const html = ACCOUNTS.map(a => `
+    <div class="bal-input-row">
+      <span>${a.name}${a.debt?' <span class="faint" style="font-weight:400;">(debt)</span>':''}</span>
+      <span class="dollar-field"><input type="number" step="1" inputmode="numeric" data-field-key="acct:${a.id}" value="${w[a.id]!==null?w[a.id]:''}" placeholder="—" onclick="this.select()" onchange="onGridBalance('${wk}','${a.id}', this.value)"></span>
+    </div>
+  `).join('') + `<div class="faint" style="font-size:.7rem; margin-top:6px;">Setting the balance for the week of ${formatDateShort(parseKey(wk))}. Credit cards and other debts: just enter what you owe — it's automatically treated as negative.</div>`;
+  document.getElementById('budget-accounts').innerHTML = html;
+}
+
+function renderBudgetRows(kind){
+  const cats = state.categories[kind];
+  if(cats.length===0) return `<div class="empty-hint">None yet.</div>`;
+  if(kind!=='expense') return cats.map(c => budgetCatRowHtml(kind, c)).join('');
+
+  // Expenses are clustered under group headers, in EXPENSE_GROUPS order;
+  // any group with no categories is skipped.
+  const byGroup = {};
+  for(const c of cats){
+    const g = expenseGroupOf(c);
+    (byGroup[g] = byGroup[g] || []).push(c);
+  }
+  return EXPENSE_GROUPS.filter(g => byGroup[g]).map(g => `
+    <div class="budget-group-header">${g}</div>
+    ${byGroup[g].map(c => budgetCatRowHtml(kind, c)).join('')}
+  `).join('');
+}
+
+function budgetCatRowHtml(kind, c){
+  const wk = currentWeekKeyForToday();
+  const w = ensureWeek(wk);
+  const recurring = c.recurring !== false;
+  const amtKey = `amt:${kind}:${c.id}`;
+  let amountField;
+  if(recurring){
+    amountField = `<span class="dollar-field"><input type="number" step="1" inputmode="numeric" data-field-key="${amtKey}" value="${c.estimate}" onclick="this.select()" onchange="reestimateCategory('${kind}','${c.id}', this.value)"></span>`;
+  } else {
+    const e = w[kind][c.id];
+    const val = (e.override!==null && e.override!==undefined) ? e.override : '';
+    amountField = `
+      <span class="dollar-field"><input type="number" step="1" inputmode="numeric" data-field-key="${amtKey}" value="${val}" placeholder="0" onclick="this.select()" onchange="onFieldChange('${wk}','${kind}','${c.id}','override', this.value)"></span>
+      <span class="bc-variable-note">wk of ${formatDateShort(parseKey(wk))}</span>
+    `;
+  }
+  const freq = c.frequency || 'monthly';
+  const monthlyWeekSelect = `<select class="bc-sel" data-field-key="mweek:${kind}:${c.id}" onchange="setMonthlyWeek('${kind}','${c.id}', this.value)" title="Which Friday">
+      <option value="1" ${c.monthlyWeek==1?'selected':''}>1st Fri</option>
+      <option value="2" ${c.monthlyWeek==2?'selected':''}>2nd Fri</option>
+      <option value="3" ${c.monthlyWeek==3?'selected':''}>3rd Fri</option>
+      <option value="4" ${c.monthlyWeek==4?'selected':''}>4th Fri</option>
+      <option value="last" ${c.monthlyWeek==='last'?'selected':''}>Last Fri</option>
+    </select>`;
+  const anchorMonthSelect = `<select class="bc-sel" data-field-key="amonth:${kind}:${c.id}" onchange="setAnchorMonth('${kind}','${c.id}', this.value)" title="Starting month">
+      ${MONTH_NAMES.map((m,i)=>`<option value="${i}" ${(c.anchorMonth||0)==i?'selected':''}>${m.slice(0,3)}</option>`).join('')}
+    </select>`;
+  const freqControls = recurring ? `
+      <select class="bc-sel" data-field-key="freq:${kind}:${c.id}" onchange="setFrequency('${kind}','${c.id}', this.value)">
+        <option value="weekly" ${freq==='weekly'?'selected':''}>Weekly</option>
+        <option value="biweekly" ${freq==='biweekly'?'selected':''}>Biweekly</option>
+        <option value="monthly" ${freq==='monthly'?'selected':''}>Monthly</option>
+        <option value="quarterly" ${freq==='quarterly'?'selected':''}>Quarterly</option>
+        <option value="biannual" ${freq==='biannual'?'selected':''}>Bi-annually</option>
+        <option value="yearly" ${freq==='yearly'?'selected':''}>Yearly</option>
+      </select>
+      ${freq==='biweekly' ? `<input type="date" class="bc-date" data-field-key="banchor:${kind}:${c.id}" value="${c.biweeklyAnchor||''}" onchange="setBiweeklyAnchor('${kind}','${c.id}', this.value)" title="A week you know gets paid">` : ''}
+      ${freq==='monthly' ? monthlyWeekSelect : ''}
+      ${(freq==='quarterly'||freq==='biannual'||freq==='yearly') ? anchorMonthSelect + monthlyWeekSelect : ''}
+    ` : '';
+  const groupSelect = kind==='expense' ? `<select class="bc-sel" data-field-key="group:${kind}:${c.id}" onchange="setGroup('${kind}','${c.id}', this.value)" title="Group">
+      ${EXPENSE_GROUPS.map(g=>`<option value="${g}" ${expenseGroupOf(c)===g?'selected':''}>${g}</option>`).join('')}
+    </select>` : '';
+  return `
+    <div class="budget-cat">
+      <div class="budget-cat-top">
+        ${renderTitleField(kind, c.id, c.name)}
+        <button class="del-btn" tabindex="-1" onclick="removeCategory('${kind}','${c.id}')">&times;</button>
+      </div>
+      <div class="budget-cat-controls">
+        <label class="bc-toggle" title="Recurring — applies automatically every period">
+          <input type="checkbox" data-field-key="rec:${kind}:${c.id}" ${recurring?'checked':''} onchange="toggleRecurring('${kind}','${c.id}', this.checked)">
+          Rec
+        </label>
+        ${amountField}
+        <input type="number" class="bc-due" data-field-key="due:${kind}:${c.id}" min="1" max="31" step="1" inputmode="numeric" placeholder="Day" value="${c.dueDay||''}" onclick="this.select()" onchange="setDueDay('${kind}','${c.id}', this.value)">
+        ${freqControls}
+        ${groupSelect}
+      </div>
+    </div>
+  `;
+}
+
+function setFrequency(kind, id, freq){
+  const c = state.categories[kind].find(c=>c.id===id);
+  if(!c) return;
+  c.frequency = freq;
+  if(freq==='biweekly' && !c.biweeklyAnchor) c.biweeklyAnchor = currentWeekKeyForToday();
+  if((freq==='monthly'||freq==='quarterly'||freq==='biannual'||freq==='yearly') && !c.monthlyWeek) c.monthlyWeek = 1;
+  if((freq==='quarterly'||freq==='biannual'||freq==='yearly') && c.anchorMonth==null) c.anchorMonth = new Date().getMonth();
+  saveState();
+  deferRenderAll();
+}
+function setBiweeklyAnchor(kind, id, val){
+  const c = state.categories[kind].find(c=>c.id===id);
+  if(!c) return;
+  c.biweeklyAnchor = val ? toKey(nearestFriday(parseKey(val))) : null;
+  saveState();
+  deferRenderAll();
+}
+function setMonthlyWeek(kind, id, val){
+  const c = state.categories[kind].find(c=>c.id===id);
+  if(c){ c.monthlyWeek = val==='last' ? 'last' : Number(val); saveState(); deferRenderAll(); }
+}
+function setAnchorMonth(kind, id, val){
+  const c = state.categories[kind].find(c=>c.id===id);
+  if(c){ c.anchorMonth = Number(val); saveState(); deferRenderAll(); }
+}
+
+function addCategory(kind){
+  const id = kind+'_'+Date.now();
+  const cat = { id, name:'New category', estimate:0, recurring:true, dueDay:null };
+  if(kind==='expense') cat.group = 'Other';
+  state.categories[kind].push(cat);
+  saveState();
+  renderBudget();
+}
+function setGroup(kind, id, value){
+  const c = state.categories[kind].find(c=>c.id===id);
+  if(c){ c.group = value; saveState(); deferRenderAll(); }
+}
+function renameCategory(kind, id, name){
+  const c = state.categories[kind].find(c=>c.id===id);
+  if(c){ c.name = name; saveState(); }
+}
+
+// Title fields are locked by default to prevent accidental edits — a
+// double-click/double-tap on the name, or the pencil button, unlocks it.
+const unlockedTitles = new Set();
+function titleFieldKey(kind, id){ return kind+':'+id; }
+function renderTitleField(kind, id, name){
+  const tk = titleFieldKey(kind, id);
+  if(unlockedTitles.has(tk)){
+    return `<input type="text" class="title-input" data-title-input="${tk}" data-field-key="title:${tk}" value="${escapeHTML(name)}" onblur="lockTitle('${kind}','${id}', this.value)" onkeydown="if(event.key==='Enter') this.blur()">`;
+  }
+  return `<span class="title-locked" ondblclick="unlockTitle('${kind}','${id}')" title="Double-click to rename">
+    <span class="title-locked-text">${escapeHTML(name)}</span>
+    <button type="button" class="title-edit-btn" tabindex="-1" onclick="unlockTitle('${kind}','${id}')" aria-label="Rename">&#9998;</button>
+  </span>`;
+}
+function unlockTitle(kind, id){
+  unlockedTitles.add(titleFieldKey(kind, id));
+  renderBudget();
+  requestAnimationFrame(()=>{
+    const el = document.querySelector(`[data-title-input="${titleFieldKey(kind, id)}"]`);
+    if(el){ el.focus(); el.select(); }
+  });
+}
+function lockTitle(kind, id, value){
+  const trimmed = value.trim();
+  if(trimmed !== '') renameCategory(kind, id, trimmed);
+  unlockedTitles.delete(titleFieldKey(kind, id));
+  deferRenderAll();
+}
+function reestimateCategory(kind, id, val){
+  const c = state.categories[kind].find(c=>c.id===id);
+  if(c){ c.estimate = wholeDollar(val); saveState(); }
+}
+function toggleRecurring(kind, id, recurring){
+  const c = state.categories[kind].find(c=>c.id===id);
+  if(c){ c.recurring = recurring; saveState(); deferRenderAll(); }
+}
+function setDueDay(kind, id, val){
+  const c = state.categories[kind].find(c=>c.id===id);
+  if(!c) return;
+  c.dueDay = val===''? null : Math.max(1, Math.min(31, Math.round(Number(val))||1));
+  saveState();
+  deferRenderAll();
+}
+function ordinal(n){
+  n = Number(n);
+  if(!n) return '';
+  const s = ['th','st','nd','rd'], v = n % 100;
+  return n + (s[(v-20)%10] || s[v] || s[0]);
+}
+function frequencyLabel(c){
+  const freq = c.frequency || 'monthly';
+  const whichFri = c.monthlyWeek==='last' ? 'last' : ordinal(c.monthlyWeek||1);
+  if(freq==='weekly') return 'Weekly';
+  if(freq==='biweekly') return 'Biweekly';
+  if(freq==='monthly') return `Monthly (${whichFri} Fri)`;
+  if(freq==='quarterly') return `Quarterly (${MONTH_NAMES[c.anchorMonth||0].slice(0,3)}, ${whichFri} Fri)`;
+  if(freq==='biannual') return `Bi-annually (${MONTH_NAMES[c.anchorMonth||0].slice(0,3)}, ${whichFri} Fri)`;
+  if(freq==='yearly') return `Yearly (${MONTH_NAMES[c.anchorMonth||0].slice(0,3)}, ${whichFri} Fri)`;
+  return '';
+}
+function removeCategory(kind, id){
+  state.categories[kind] = state.categories[kind].filter(c=>c.id!==id);
+  saveState();
+  renderBudget();
+}
+
+/* =========================================================================
+   BALANCE MODAL
+   ========================================================================= */
+function modalDomId(accountId){ return 'modal-'+accountId.toLowerCase(); }
+
+function openBalanceModal(){
+  document.getElementById('modal-account-fields').innerHTML = ACCOUNTS.map(a => `
+    <div class="field">
+      <label>${a.name}</label>
+      <span class="dollar-field"><input type="number" step="1" inputmode="numeric" id="${modalDomId(a.id)}" value="${state.accounts[a.id]||0}"></span>
+    </div>
+  `).join('');
+  document.getElementById('balance-modal').classList.add('open');
+}
+function closeBalanceModal(){
+  document.getElementById('balance-modal').classList.remove('open');
+}
+function saveBalanceModal(){
+  const wk = toKey(nearestFriday(new Date()));
+  const w = ensureWeek(wk);
+  for(const a of ACCOUNTS){
+    const val = normalizeAccountValue(a.id, wholeDollar(document.getElementById(modalDomId(a.id)).value));
+    state.accounts[a.id] = val;
+    w[a.id] = val;
+  }
+  state.accounts.updatedAt = new Date().toISOString();
+
+  saveState();
+  closeBalanceModal();
+  showToast('Balances updated');
+  renderAll();
+}
+
+/* =========================================================================
+   DATA IMPORT/EXPORT
+   ========================================================================= */
+function exportData(){
+  const blob = new Blob([JSON.stringify(state, null, 2)], { type:'application/json' });
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement('a');
+  a.href = url;
+  a.download = 'expense-tracker-backup-' + toKey(new Date()) + '.json';
+  document.body.appendChild(a);
+  a.click();
+  document.body.removeChild(a);
+  URL.revokeObjectURL(url);
+  showToast('Backup downloaded');
+}
+function importData(evt){
+  const file = evt.target.files[0];
+  if(!file) return;
+  const reader = new FileReader();
+  reader.onload = () => {
+    try{
+      const parsed = JSON.parse(reader.result);
+      if(!parsed.categories || !parsed.weeks || !parsed.accounts) throw new Error('bad format');
+      state = parsed;
+      saveState();
+      renderAll();
+      showToast('Backup imported');
+    }catch(e){
+      alert('That file does not look like a valid backup.');
+    }
+  };
+  reader.readAsText(file);
+  evt.target.value = '';
+}
+function resetAllData(){
+  if(!confirm('This will erase all data on this device. Export a backup first if you want to keep it. Continue?')) return;
+  state = freshState();
+  saveState();
+  renderAll();
+  showToast('All data reset');
+}
+
+/* =========================================================================
+   MISC
+   ========================================================================= */
+function escapeHTML(s){
+  return String(s).replace(/[&<>"']/g, m => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[m]));
+}
+let toastTimer=null;
+function showToast(msg){
+  const t = document.getElementById('toast');
+  t.textContent = msg;
+  t.classList.add('show');
+  clearTimeout(toastTimer);
+  toastTimer = setTimeout(()=>t.classList.remove('show'), 1800);
+}
+
+function renderAll(){
+  if(activeTab==='dashboard') renderDashboard();
+  if(activeTab==='weekly') renderWeekly();
+  if(activeTab==='monthly') renderMonthly();
+  if(activeTab==='budget') renderBudget();
+}
+
+// Re-rendering a list (Budget rows, grid cells, etc.) replaces those DOM
+// nodes with fresh ones. If that happens synchronously inside a field's own
+// onchange/blur handler, it happens mid-way through the browser's Tab key
+// handling — the element Tab was about to focus next gets destroyed before
+// the browser can focus it, so focus falls back to <body> and Tab appears
+// "broken". Deferring the render lets the browser finish moving focus to the
+// next field first; we then look up that same field (by a stable
+// data-field-key) in the freshly rendered DOM and refocus it, so Tab really
+// does land on the next field instead of losing your place.
+let deferredRenderHandle = null;
+function deferRenderAll(){
+  if(deferredRenderHandle) clearTimeout(deferredRenderHandle);
+  deferredRenderHandle = setTimeout(()=>{
+    deferredRenderHandle = null;
+    const active = document.activeElement;
+    const key = active && active.dataset ? active.dataset.fieldKey : null;
+    let selStart = null, selEnd = null;
+    if(key && active && typeof active.selectionStart === 'number'){
+      try{ selStart = active.selectionStart; selEnd = active.selectionEnd; }catch(err){}
+    }
+    renderAll();
+    if(key){
+      const el = document.querySelector(`.view.active [data-field-key="${key}"]`);
+      if(el){
+        el.focus();
+        if(selStart!==null && typeof el.setSelectionRange === 'function'){
+          try{ el.setSelectionRange(selStart, selEnd); }catch(err){}
+        }
+      }
+    }
+  }, 0);
+}
+
+/* =========================================================================
+   INIT
+   ========================================================================= */
+showTab('dashboard');
+</script>
+</body>
+</html>

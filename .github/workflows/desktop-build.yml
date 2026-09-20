@@ -1,0 +1,65 @@
+name: Build Desktop App
+
+# Builds the Tauri desktop installers on all three platforms. Runs on
+# GitHub-hosted runners, so it's unaffected by local machine restrictions
+# (e.g. Windows Smart App Control blocking unsigned local builds).
+#
+# Trigger manually from the Actions tab any time, or push a tag like
+# "v1.0.0" to build a release set.
+on:
+  workflow_dispatch:
+  push:
+    tags:
+      - 'v*'
+
+jobs:
+  build:
+    strategy:
+      fail-fast: false
+      matrix:
+        platform: [windows-latest, macos-latest, ubuntu-22.04]
+
+    runs-on: ${{ matrix.platform }}
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Install Linux dependencies
+        if: matrix.platform == 'ubuntu-22.04'
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y libwebkit2gtk-4.1-dev libappindicator3-dev librsvg2-dev patchelf
+
+      - name: Setup Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: 20
+
+      - name: Setup Rust
+        uses: dtolnay/rust-toolchain@stable
+
+      - name: Cache Rust build
+        uses: Swatinem/rust-cache@v2
+        with:
+          workspaces: desktop-app/src-tauri
+
+      - name: Install npm dependencies
+        working-directory: desktop-app
+        run: npm install
+
+      - name: Build the desktop app
+        working-directory: desktop-app
+        run: npm run build
+
+      - name: Upload installers
+        uses: actions/upload-artifact@v4
+        with:
+          name: expense-tracker-${{ matrix.platform }}
+          path: |
+            desktop-app/src-tauri/target/release/bundle/**/*.msi
+            desktop-app/src-tauri/target/release/bundle/**/*.exe
+            desktop-app/src-tauri/target/release/bundle/**/*.dmg
+            desktop-app/src-tauri/target/release/bundle/**/*.app.tar.gz
+            desktop-app/src-tauri/target/release/bundle/**/*.AppImage
+            desktop-app/src-tauri/target/release/bundle/**/*.deb
+          if-no-files-found: warn
