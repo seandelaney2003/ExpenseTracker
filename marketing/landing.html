@@ -1,0 +1,482 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="color-scheme" content="light dark">
+<script>document.documentElement.className+=' js';</script>
+<title>Expense Tracker — a weekly budget tracker for paychecks that don't fit a month</title>
+<style>
+/* ---------- Theme: light by default, dark when the visitor's OS asks for it ---------- */
+:root{
+  --bg:#f5faf6; --bg-alt:#ffffff; --bg-sunken:#e9f3ec;
+  --text:#0d1f16; --muted:#43574c; --faint:#5d7266;
+  --border:#cfe0d5;
+  --accent:#15803d; --accent-strong:#166534; --on-accent:#ffffff;
+  --accent-soft:#dcfce7; --accent-ink:#14532d;
+  --neg:#b91c1c; --neg-soft:#fee2e2;
+  --warn:#92400e; --warn-soft:#fef3c7;
+  --shadow:0 1px 2px rgba(13,31,22,.06), 0 8px 24px rgba(13,31,22,.08);
+  --radius:16px;
+}
+@media (prefers-color-scheme: dark){
+  :root{
+    --bg:#0b1512; --bg-alt:#132019; --bg-sunken:#0a100c;
+    --text:#eaf2ec; --muted:#a9bdb0; --faint:#8aa295;
+    --border:#23382b;
+    --accent:#22c55e; --accent-strong:#4ade80; --on-accent:#052e16;
+    --accent-soft:#123423; --accent-ink:#86efac;
+    --neg:#ff8a8a; --neg-soft:#2c1414;
+    --warn:#f0b649; --warn-soft:#2a2110;
+    --shadow:0 1px 2px rgba(0,0,0,.4), 0 8px 28px rgba(0,0,0,.35);
+  }
+}
+
+*{box-sizing:border-box}
+html{scroll-behavior:smooth}
+body{
+  margin:0; background:var(--bg); color:var(--text);
+  font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Helvetica,Arial,sans-serif;
+  line-height:1.6; -webkit-font-smoothing:antialiased;
+}
+img,svg{max-width:100%}
+a{color:inherit}
+.wrap{max-width:1080px; margin:0 auto; padding:0 20px}
+.num{font-variant-numeric:tabular-nums}
+.pos{color:var(--accent-strong)} .neg{color:var(--neg)}
+h1,h2,h3{line-height:1.15; margin:0; letter-spacing:-.02em; font-weight:800}
+p{margin:0}
+
+/* Accessibility */
+.skip{position:absolute; left:-999px; top:8px; background:var(--accent); color:var(--on-accent); padding:10px 14px; border-radius:8px; z-index:100; font-weight:700}
+.skip:focus{left:8px}
+:focus-visible{outline:3px solid var(--accent); outline-offset:3px; border-radius:6px}
+.sr-only{position:absolute; width:1px; height:1px; overflow:hidden; clip:rect(0 0 0 0); white-space:nowrap}
+
+/* Buttons */
+.btn{
+  display:inline-flex; align-items:center; justify-content:center; gap:10px; cursor:pointer; text-decoration:none;
+  font:inherit; font-weight:800; border:2px solid transparent; border-radius:14px; padding:14px 26px; font-size:1.05rem;
+  background:var(--accent); color:var(--on-accent); box-shadow:var(--shadow);
+  transition:transform .15s ease, background .15s ease; line-height:1.2; -webkit-appearance:none; appearance:none;
+}
+.btn:hover{background:var(--accent-strong); transform:translateY(-1px)}
+.btn:active{transform:translateY(0)}
+.btn-sm{padding:9px 18px; font-size:.95rem; border-radius:12px}
+.btn-ghost{background:transparent; color:var(--text); border-color:var(--border); box-shadow:none}
+.btn-ghost:hover{background:var(--bg-sunken)}
+.price-chip:empty{display:none}
+.price-chip{background:rgba(255,255,255,.22); padding:2px 10px; border-radius:999px; font-weight:800}
+@media (prefers-color-scheme: dark){ .price-chip{background:rgba(5,46,22,.18)} }
+
+/* Header */
+header.top{position:sticky; top:0; z-index:20; background:color-mix(in srgb, var(--bg) 88%, transparent); backdrop-filter:saturate(1.4) blur(10px); border-bottom:1px solid var(--border)}
+header.top .wrap{display:flex; align-items:center; justify-content:space-between; gap:12px; padding-top:12px; padding-bottom:12px}
+.brand{display:flex; align-items:center; gap:10px; font-weight:800; font-size:1.05rem; text-decoration:none}
+.logomark{width:30px; height:30px; border-radius:9px; background:linear-gradient(160deg,#22c55e,#16994a); color:#052e16; font-weight:900; display:grid; place-items:center; box-shadow:0 1px 3px rgba(0,0,0,.3)}
+
+/* Hero */
+.hero{padding:56px 0 40px}
+.hero .wrap{display:grid; grid-template-columns:1.05fr .95fr; gap:48px; align-items:center}
+.eyebrow{display:inline-block; font-size:.78rem; font-weight:800; letter-spacing:.08em; text-transform:uppercase; color:var(--accent-ink); background:var(--accent-soft); padding:6px 12px; border-radius:999px; margin-bottom:18px}
+.hero h1{font-size:clamp(2.1rem, 5.2vw, 3.4rem)}
+.hero h1 em{font-style:normal; color:var(--accent)}
+.lede{font-size:1.15rem; color:var(--muted); margin:18px 0 26px; max-width:52ch}
+.cta-row{display:flex; flex-wrap:wrap; gap:12px; align-items:center}
+.trust{list-style:none; padding:0; margin:22px 0 0; display:flex; flex-wrap:wrap; gap:8px 20px; color:var(--muted); font-size:.95rem}
+.trust li::before{content:"✓"; color:var(--accent); font-weight:900; margin-right:7px}
+.rating-line{margin-top:16px; font-size:.92rem; color:var(--faint)}
+
+/* Mock UI (pure CSS/HTML, example data) */
+.mock{background:var(--bg-alt); border:1px solid var(--border); border-radius:var(--radius); box-shadow:var(--shadow); padding:18px}
+.mock-title{font-size:.72rem; font-weight:800; letter-spacing:.06em; text-transform:uppercase; color:var(--faint); margin-bottom:12px; display:flex; justify-content:space-between}
+.tiles{display:grid; grid-template-columns:1fr 1fr; gap:10px}
+.tile{background:var(--bg-sunken); border-radius:12px; padding:12px 10px; text-align:center}
+.tile .l{font-size:.68rem; letter-spacing:.05em; text-transform:uppercase; color:var(--faint)}
+.tile .v{font-size:1.25rem; font-weight:800; margin-top:2px}
+.tile.total{grid-column:1/-1; border:1px solid var(--border); background:var(--bg-alt)}
+.mock-note{font-size:.78rem; color:var(--faint); margin-top:12px}
+.rows{display:flex; flex-direction:column}
+.row{display:flex; align-items:center; justify-content:space-between; gap:10px; padding:11px 2px; border-bottom:1px solid var(--border); font-size:.95rem}
+.row:last-child{border-bottom:0}
+.row .n{flex:1; font-weight:600}
+.pill{font-size:.72rem; background:var(--bg-sunken); color:var(--muted); padding:3px 9px; border-radius:999px}
+.box{width:18px; height:18px; border-radius:5px; border:2px solid var(--border); display:inline-grid; place-items:center; font-size:.7rem; font-weight:900; margin-right:8px; flex:none}
+.box.on{background:var(--accent); border-color:var(--accent); color:var(--on-accent)}
+.row .amt{font-weight:800}
+.row.total{font-weight:800; font-size:1.05rem; padding-top:14px}
+
+/* Sections */
+section{padding:64px 0}
+.sec-head{max-width:680px; margin-bottom:36px}
+.sec-head h2{font-size:clamp(1.7rem,3.6vw,2.4rem)}
+.sec-head p{color:var(--muted); font-size:1.08rem; margin-top:12px}
+.band{background:var(--bg-alt); border-top:1px solid var(--border); border-bottom:1px solid var(--border)}
+
+.problem{display:grid; grid-template-columns:1fr 1fr; gap:20px}
+.card{background:var(--bg-alt); border:1px solid var(--border); border-radius:var(--radius); padding:24px; box-shadow:var(--shadow)}
+.band .card{background:var(--bg)}
+.card h3{font-size:1.15rem; margin-bottom:8px}
+.card p{color:var(--muted)}
+.card.bad h3::before{content:"✕ "; color:var(--neg)}
+.card.good h3::before{content:"✓ "; color:var(--accent)}
+
+.steps{display:grid; grid-template-columns:repeat(3,1fr); gap:20px; counter-reset:s}
+.step{position:relative; padding-top:6px}
+.step .num-badge{width:34px; height:34px; border-radius:50%; background:var(--accent); color:var(--on-accent); font-weight:900; display:grid; place-items:center; margin-bottom:14px}
+.step h3{font-size:1.2rem; margin-bottom:8px}
+.step p{color:var(--muted)}
+
+/* Tabs */
+.tabs{display:grid; grid-template-columns:.8fr 1.2fr; gap:28px; align-items:start}
+[role=tablist]{display:flex; flex-direction:column; gap:8px}
+[role=tab]{
+  text-align:left; font:inherit; cursor:pointer; background:transparent; color:var(--text);
+  border:1px solid var(--border); border-left:4px solid var(--border); border-radius:12px; padding:14px 16px;
+}
+[role=tab] strong{display:block; font-size:1.02rem}
+[role=tab] span{display:block; font-size:.9rem; color:var(--muted); margin-top:2px}
+[role=tab][aria-selected=true]{background:var(--bg-alt); border-color:var(--accent); box-shadow:var(--shadow)}
+[role=tabpanel]{display:none}
+[role=tabpanel].active{display:block}
+
+.features{display:grid; grid-template-columns:repeat(3,1fr); gap:18px}
+.feature{background:var(--bg-alt); border:1px solid var(--border); border-radius:14px; padding:22px}
+.feature svg{width:28px; height:28px; stroke:var(--accent); fill:none; stroke-width:1.8; stroke-linecap:round; stroke-linejoin:round; margin-bottom:12px}
+.feature h3{font-size:1.05rem; margin-bottom:6px}
+.feature p{color:var(--muted); font-size:.97rem}
+
+table.compare{width:100%; border-collapse:collapse; background:var(--bg); border:1px solid var(--border); border-radius:14px; overflow:hidden}
+.compare th,.compare td{padding:14px 16px; text-align:left; border-bottom:1px solid var(--border); vertical-align:top}
+.compare thead th{background:var(--bg-sunken); font-size:.85rem; letter-spacing:.04em; text-transform:uppercase; color:var(--faint)}
+.compare tbody th{font-weight:700}
+.compare tr:last-child td,.compare tr:last-child th{border-bottom:0}
+.compare td.us{background:var(--accent-soft); color:var(--accent-ink); font-weight:700}
+
+.included{display:grid; grid-template-columns:1fr 1fr; gap:20px}
+.included ul{margin:0; padding:0; list-style:none}
+.included li{padding:10px 0; border-bottom:1px solid var(--border); display:flex; gap:10px; justify-content:space-between}
+.included li:last-child{border-bottom:0}
+.included small{color:var(--faint)}
+
+details{background:var(--bg-alt); border:1px solid var(--border); border-radius:12px; margin-bottom:10px}
+summary{cursor:pointer; padding:16px 18px; font-weight:700; list-style:none; display:flex; justify-content:space-between; gap:12px}
+summary::-webkit-details-marker{display:none}
+summary::after{content:"+"; font-size:1.3rem; line-height:1; color:var(--accent); font-weight:900}
+details[open] summary::after{content:"–"}
+details p{padding:0 18px 18px; color:var(--muted)}
+
+.final{text-align:center}
+.final .card{padding:48px 24px; background:linear-gradient(160deg,var(--accent-soft),var(--bg-alt))}
+.final h2{font-size:clamp(1.8rem,4vw,2.6rem); margin-bottom:12px}
+.final p{color:var(--muted); font-size:1.1rem; max-width:52ch; margin:0 auto 26px}
+.price-big{font-size:2.4rem; font-weight:900; margin-bottom:6px}
+footer{padding:36px 0 96px; text-align:center; color:var(--faint); font-size:.9rem}
+
+/* Sticky mobile buy bar */
+.buybar{position:fixed; left:0; right:0; bottom:0; z-index:30; display:none; padding:10px 14px calc(10px + env(safe-area-inset-bottom)); background:var(--bg-alt); border-top:1px solid var(--border); box-shadow:0 -6px 20px rgba(0,0,0,.12); gap:12px; align-items:center; justify-content:space-between}
+.buybar .btn{flex:1}
+.buybar.show{display:flex}
+@media (min-width:821px){ .buybar.show{display:none} }
+
+/* Scroll reveal (disabled for reduced motion) */
+.js .reveal{transform:translateY(14px); transition:transform .5s ease}
+.js .reveal.in{transform:none}
+@media (prefers-reduced-motion: reduce){
+  html{scroll-behavior:auto}
+  .js .reveal{transform:none; transition:none}
+  .btn{transition:none}
+}
+
+@media (max-width:820px){
+  .hero{padding:36px 0 24px}
+  .hero .wrap,.problem,.steps,.tabs,.included{grid-template-columns:1fr}
+  .features{grid-template-columns:1fr 1fr}
+  section{padding:48px 0}
+  .compare th,.compare td{padding:11px 10px; font-size:.92rem}
+}
+@media (max-width:520px){ .features{grid-template-columns:1fr} }
+</style>
+</head>
+<body>
+<a class="skip" href="#main">Skip to content</a>
+
+<header class="top">
+  <div class="wrap">
+    <a class="brand" href="#top" aria-label="Back to top">
+      <span class="logomark" aria-hidden="true">$</span>
+      <span data-gumroad-field="name">Expense Tracker</span>
+    </a>
+    <button type="button" class="btn btn-sm" data-gumroad-action="buy">Buy now</button>
+  </div>
+</header>
+
+<main id="main">
+<!-- ===== HERO ===== -->
+<div id="top" class="hero">
+  <div class="wrap">
+    <div>
+      <span class="eyebrow">For weekly &amp; biweekly paychecks</span>
+      <h1>Know exactly where your money stands — <em>every Friday.</em></h1>
+      <p class="lede">A budget tracker built around how money actually moves: paychecks and bills land on a schedule, weeks end on Friday, and everything rolls up into one clear monthly picture. Set it up once, then just check things off.</p>
+      <div class="cta-row">
+        <button type="button" class="btn" data-gumroad-action="buy">Get Expense Tracker <span class="price-chip num" data-gumroad-field="price"></span></button>
+        <a class="btn btn-ghost" href="#how">See how it works</a>
+      </div>
+      <ul class="trust">
+        <li>One-time purchase</li>
+        <li>No account</li>
+        <li>Your data never leaves your computer</li>
+      </ul>
+      <p class="rating-line"><span data-gumroad-field="rating">Be the first to review</span> <span data-gumroad-field="review-count"></span></p>
+    </div>
+
+    <div class="mock reveal" aria-label="Example of the Home screen showing balances">
+      <div class="mock-title"><span>What you have today</span><span>Example data</span></div>
+      <div class="tiles">
+        <div class="tile"><div class="l">Checking</div><div class="v num">$11,747</div></div>
+        <div class="tile"><div class="l">Savings</div><div class="v num">$34,132</div></div>
+        <div class="tile"><div class="l">Credit card</div><div class="v num neg">-$3,045</div></div>
+        <div class="tile"><div class="l">Other bank</div><div class="v num">$1,100</div></div>
+        <div class="tile total"><div class="l">Total</div><div class="v num pos">$43,934</div></div>
+      </div>
+      <p class="mock-note">Every account added together — debts subtract automatically. No projections, no guessing.</p>
+    </div>
+  </div>
+</div>
+
+<!-- ===== PROBLEM ===== -->
+<section class="band" aria-labelledby="problem-h">
+  <div class="wrap">
+    <div class="sec-head reveal">
+      <h2 id="problem-h">Monthly budgets break when you're paid weekly.</h2>
+      <p>Months have three paychecks, bills land between pay dates, and a calendar grid hides what's actually left before the next deposit. Expense Tracker starts from the week instead.</p>
+    </div>
+    <div class="problem">
+      <div class="card bad reveal"><h3>The usual way</h3><p>One big monthly number. A bill due on the 3rd and a paycheck on the 5th make the month look worse than it is, and "left to spend" is a guess.</p></div>
+      <div class="card good reveal"><h3>Pay-week budgeting</h3><p>Each bill sits in the Friday-ending week it's actually due. The month is just those weeks added up, so you always know what's left to collect and what's left to pay.</p></div>
+    </div>
+  </div>
+</section>
+
+<!-- ===== HOW IT WORKS ===== -->
+<section id="how" aria-labelledby="how-h">
+  <div class="wrap">
+    <div class="sec-head reveal">
+      <h2 id="how-h">Set it up once. Then a minute a week.</h2>
+    </div>
+    <div class="steps">
+      <div class="step reveal"><div class="num-badge" aria-hidden="true">1</div><h3>Add your paychecks and bills</h3><p>Set the amount and how often it repeats — weekly, biweekly, monthly, quarterly, twice a year, or yearly. The whole forecast builds itself.</p></div>
+      <div class="step reveal"><div class="num-badge" aria-hidden="true">2</div><h3>Check things off as they happen</h3><p>Got paid? Paid a bill? Tick the box. The amount locks in, so changing your plan later never rewrites your history.</p></div>
+      <div class="step reveal"><div class="num-badge" aria-hidden="true">3</div><h3>See where you'll land</h3><p>Home shows what you have today, what's left to collect and pay this month, and your projected balance for the months ahead.</p></div>
+    </div>
+  </div>
+</section>
+
+<!-- ===== SCREENS ===== -->
+<section class="band" aria-labelledby="see-h">
+  <div class="wrap">
+    <div class="sec-head reveal">
+      <h2 id="see-h">A look inside</h2>
+      <p>Three screens do almost all the work. (Example data shown.)</p>
+    </div>
+    <div class="tabs">
+      <div role="tablist" aria-label="App screens">
+        <button role="tab" id="t-budget" aria-selected="true" aria-controls="p-budget"><strong>Budget</strong><span>Set each bill up once — amount, schedule, due day.</span></button>
+        <button role="tab" id="t-week" aria-selected="false" aria-controls="p-week" tabindex="-1"><strong>Weekly</strong><span>Your routine: check items off, fix amounts, update balances.</span></button>
+        <button role="tab" id="t-home" aria-selected="false" aria-controls="p-home" tabindex="-1"><strong>Home</strong><span>Today's balance and where this month will end up.</span></button>
+      </div>
+      <div>
+        <div role="tabpanel" id="p-budget" aria-labelledby="t-budget" class="mock active">
+          <div class="mock-title"><span>Budget — categories</span></div>
+          <div class="rows">
+            <div class="row"><span class="n">Paycheck 1</span><span class="pill">Biweekly</span><span class="amt num pos">$3,000</span></div>
+            <div class="row"><span class="n">Mortgage</span><span class="pill">Monthly · 1st Fri</span><span class="amt num neg">-$1,800</span></div>
+            <div class="row"><span class="n">Electric</span><span class="pill">Monthly</span><span class="amt num neg">-$120</span></div>
+            <div class="row"><span class="n">Streaming</span><span class="pill">Monthly</span><span class="amt num neg">-$18</span></div>
+          </div>
+          <p class="mock-note">Accounts live here too — rename them, add more, mark cards and loans as debt.</p>
+        </div>
+        <div role="tabpanel" id="p-week" aria-labelledby="t-week" class="mock">
+          <div class="mock-title"><span>Weekly — Friday, Sept 4</span></div>
+          <div class="rows">
+            <div class="row"><span class="box on" aria-hidden="true">✓</span><span class="n">Paycheck 1</span><span class="amt num pos">$3,000</span></div>
+            <div class="row"><span class="box on" aria-hidden="true">✓</span><span class="n">Mortgage</span><span class="amt num neg">-$1,800</span></div>
+            <div class="row"><span class="box" aria-hidden="true"></span><span class="n">Electric <span class="pill">unpaid</span></span><span class="amt num neg">-$120</span></div>
+          </div>
+          <p class="mock-note">Update your real bank balances at the bottom — Home and Monthly pick them up automatically.</p>
+        </div>
+        <div role="tabpanel" id="p-home" aria-labelledby="t-home" class="mock">
+          <div class="mock-title"><span>Home — this month</span></div>
+          <div class="rows">
+            <div class="row"><span class="n">Starting balance (today)</span><span class="amt num">$46,000</span></div>
+            <div class="row"><span class="n">Income left to collect</span><span class="amt num pos">+$1,340</span></div>
+            <div class="row"><span class="n">Expenses unpaid</span><span class="amt num neg">-$212</span></div>
+            <div class="row"><span class="n">Expenses paid</span><span class="amt num neg">-$1,920</span></div>
+            <div class="row total"><span class="n">After bills paid</span><span class="amt num">$45,208</span></div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ===== FEATURES ===== -->
+<section aria-labelledby="feat-h">
+  <div class="wrap">
+    <div class="sec-head reveal"><h2 id="feat-h">Built for how budgets really work</h2></div>
+    <div class="features">
+      <div class="feature reveal"><svg viewBox="0 0 24 24" aria-hidden="true"><rect x="3" y="4" width="18" height="17" rx="2"/><path d="M3 9h18M8 2v4M16 2v4"/></svg><h3>Friday-ending weeks</h3><p>Every week closes on a Friday, matching when most paychecks and bills actually land.</p></div>
+      <div class="feature reveal"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M17 2l4 4-4 4"/><path d="M3 11V9a3 3 0 013-3h15"/><path d="M7 22l-4-4 4-4"/><path d="M21 13v2a3 3 0 01-3 3H3"/></svg><h3>Flexible recurrence</h3><p>Weekly to yearly, each with its own "which Friday" rule. Off-schedule weeks plan for $0 automatically.</p></div>
+      <div class="feature reveal"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M20 6L9 17l-5-5"/></svg><h3>Check it off, lock it in</h3><p>Ticking a bill freezes the real amount, so later plan changes never rewrite the past.</p></div>
+      <div class="feature reveal"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M3 10l9-6 9 6"/><path d="M5 10v8M9 10v8M15 10v8M19 10v8M3 20h18"/></svg><h3>Real account tracking</h3><p>Checking, savings, cards and more — fully editable. Debts subtract on their own; never type a minus sign.</p></div>
+      <div class="feature reveal"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 6h16M4 12h16M4 18h10"/></svg><h3>Calendar + spreadsheet</h3><p>See what's due on which day, and check things off in a familiar grid. Unpaid items stay flagged.</p></div>
+      <div class="feature reveal"><svg viewBox="0 0 24 24" aria-hidden="true"><rect x="5" y="11" width="14" height="10" rx="2"/><path d="M8 11V7a4 4 0 018 0v4"/></svg><h3>Private by design</h3><p>No account, no bank linking, no server. Everything is stored on your own computer.</p></div>
+    </div>
+    <div class="cta-row" style="justify-content:center; margin-top:36px">
+      <button type="button" class="btn" data-gumroad-action="buy">Get Expense Tracker <span class="price-chip num" data-gumroad-field="price"></span></button>
+    </div>
+  </div>
+</section>
+
+<!-- ===== COMPARE ===== -->
+<section class="band" aria-labelledby="cmp-h">
+  <div class="wrap">
+    <div class="sec-head reveal">
+      <h2 id="cmp-h">Not another subscription</h2>
+      <p>Compared with many subscription budgeting apps:</p>
+    </div>
+    <div style="overflow-x:auto">
+    <table class="compare">
+      <caption class="sr-only">Expense Tracker compared with typical subscription budgeting apps</caption>
+      <thead><tr><th scope="col"></th><th scope="col">Expense Tracker</th><th scope="col">Many subscription apps</th></tr></thead>
+      <tbody>
+        <tr><th scope="row">Pricing</th><td class="us">One-time purchase</td><td>Monthly or yearly fee</td></tr>
+        <tr><th scope="row">Account required</th><td class="us">No</td><td>Usually</td></tr>
+        <tr><th scope="row">Bank login</th><td class="us">Never asked</td><td>Often requested</td></tr>
+        <tr><th scope="row">Where your data lives</th><td class="us">Only on your computer</td><td>Company servers</td></tr>
+        <tr><th scope="row">Works offline</th><td class="us">Yes</td><td>Often not</td></tr>
+        <tr><th scope="row">Built around</th><td class="us">Weekly &amp; biweekly pay</td><td>Calendar months</td></tr>
+      </tbody>
+    </table>
+    </div>
+  </div>
+</section>
+
+<!-- ===== WHAT YOU GET ===== -->
+<section aria-labelledby="get-h">
+  <div class="wrap">
+    <div class="sec-head reveal"><h2 id="get-h">What you get</h2><p>One purchase, installers for every platform. Runs fully offline once installed.</p></div>
+    <div class="included">
+      <div class="card">
+        <h3>Downloads</h3>
+        <ul>
+          <li><span>Windows installer (.exe)</span><small>Windows 10 or later</small></li>
+          <li><span>Windows installer (.msi)</span><small>Same app, .msi format</small></li>
+          <li><span>macOS (.dmg)</span><small>Apple Silicon Macs</small></li>
+          <li><span>Linux (.AppImage)</span><small>Portable, no install</small></li>
+          <li><span>Linux (.deb)</span><small>Debian / Ubuntu</small></li>
+        </ul>
+      </div>
+      <div class="card">
+        <h3>Good to know</h3>
+        <ul>
+          <li><span>Whole-dollar amounts, no cents</span></li>
+          <li><span>Backup and restore with one click (export / import)</span></li>
+          <li><span>Use it on as many of your own computers as you like</span></li>
+          <li><span>Desktop only for now — no phone app yet</span></li>
+          <li><span>No cloud sync; your data stays local</span></li>
+        </ul>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ===== FAQ ===== -->
+<section class="band" aria-labelledby="faq-h">
+  <div class="wrap" style="max-width:780px">
+    <div class="sec-head reveal"><h2 id="faq-h">Questions</h2></div>
+    <details><summary>Is my financial data private?</summary><p>Yes. There's no account and no server. Everything is stored locally on your device, and nothing is ever uploaded.</p></details>
+    <details><summary>Is this a subscription?</summary><p>No. It's a one-time purchase.</p></details>
+    <details><summary>Do I need to be paid weekly?</summary><p>No, any schedule works. It's organized around Friday-ending weeks because that's when most paychecks and bills land, however often you're paid.</p></details>
+    <details><summary>Can I use it on more than one computer?</summary><p>Yes. Your data lives on each computer separately (there's no cloud sync), so use the built-in Export and Import backup to move your budget between them.</p></details>
+    <details><summary>Does it connect to my bank?</summary><p>No, by design. You enter your balances yourself, which takes seconds a week and keeps your bank credentials out of the picture entirely.</p></details>
+    <details><summary>Is there a phone app?</summary><p>Not yet. It's a desktop app for Windows, macOS (Apple Silicon) and Linux.</p></details>
+    <details><summary>My computer shows a security warning when I install it.</summary><p>The installers aren't code-signed yet, so Windows SmartScreen or macOS Gatekeeper may warn you the first time. On Windows choose "More info" then "Run anyway". On a Mac, right-click the app, choose Open, and confirm. It's a one-time step.</p></details>
+  </div>
+</section>
+
+<!-- ===== FINAL CTA ===== -->
+<section class="final" aria-labelledby="final-h">
+  <div class="wrap">
+    <div class="card">
+      <h2 id="final-h">Set it up once. Check it off every week.</h2>
+      <p>No account, no subscription, no bank login — just a clear picture of your money, every Friday.</p>
+      <div class="price-big num" data-gumroad-field="price"></div>
+      <div class="cta-row" style="justify-content:center">
+        <button type="button" class="btn" data-gumroad-action="buy">Buy Expense Tracker</button>
+      </div>
+    </div>
+  </div>
+</section>
+</main>
+
+<footer>
+  <div class="wrap">Secure checkout by Gumroad.</div>
+</footer>
+
+<div class="buybar" id="buybar">
+  <button type="button" class="btn" data-gumroad-action="buy">Get it now <span class="price-chip num" data-gumroad-field="price"></span></button>
+</div>
+
+<script>
+(function(){
+  // Tabs (arrow keys / Home / End, roving tabindex)
+  var tabs = Array.prototype.slice.call(document.querySelectorAll('[role=tab]'));
+  function select(tab, focus){
+    tabs.forEach(function(t){
+      var on = t === tab;
+      t.setAttribute('aria-selected', on ? 'true' : 'false');
+      t.setAttribute('tabindex', on ? '0' : '-1');
+      var p = document.getElementById(t.getAttribute('aria-controls'));
+      if (p) p.classList.toggle('active', on);
+    });
+    if (focus) tab.focus();
+  }
+  tabs.forEach(function(t, i){
+    t.addEventListener('click', function(){ select(t, false); });
+    t.addEventListener('keydown', function(e){
+      var n = null;
+      if (e.key === 'ArrowDown' || e.key === 'ArrowRight') n = tabs[(i + 1) % tabs.length];
+      else if (e.key === 'ArrowUp' || e.key === 'ArrowLeft') n = tabs[(i - 1 + tabs.length) % tabs.length];
+      else if (e.key === 'Home') n = tabs[0];
+      else if (e.key === 'End') n = tabs[tabs.length - 1];
+      if (n){ e.preventDefault(); select(n, true); }
+    });
+  });
+
+  // Scroll reveal — content is fully visible without JS or with reduced motion
+  var items = document.querySelectorAll('.reveal');
+  var reduce = window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+  if ('IntersectionObserver' in window && !reduce){
+    var io = new IntersectionObserver(function(entries){
+      entries.forEach(function(en){ if (en.isIntersecting){ en.target.classList.add('in'); io.unobserve(en.target); } });
+    }, { threshold: 0.12 });
+    items.forEach(function(el){ io.observe(el); });
+  } else {
+    items.forEach(function(el){ el.classList.add('in'); });
+  }
+
+  // Sticky buy bar appears on small screens once the hero has scrolled away
+  var bar = document.getElementById('buybar');
+  var hero = document.querySelector('.hero');
+  function check(){
+    if (!bar || !hero) return;
+    bar.classList.toggle('show', hero.getBoundingClientRect().bottom < 0);
+  }
+  window.addEventListener('scroll', check, { passive: true });
+  check();
+})();
+</script>
+</body>
+</html>
