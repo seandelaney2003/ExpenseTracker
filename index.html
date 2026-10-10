@@ -85,7 +85,7 @@ input[type=number]::-webkit-inner-spin-button{-webkit-appearance:none; margin:0;
 .appbar .balance-pill b{color:var(--text); font-variant-numeric:tabular-nums;}
 
 /* ---------- Layout ---------- */
-main{ max-width:720px; margin:0 auto; padding:14px 14px 28px; }
+main{ max-width:1100px; margin:0 auto; padding:14px 24px 28px; }
 .view{ display:none; animation: fade .15s ease; }
 .view.active{ display:block; }
 @keyframes fade{ from{opacity:0; transform:translateY(4px);} to{opacity:1; transform:none;} }
@@ -303,6 +303,95 @@ table.mgrid tr.row-balance td{color:var(--accent);}
 .budget-cat:first-child{border-top:none;}
 .budget-cat-top{display:flex; gap:6px; align-items:center;}
 .budget-cat-controls{display:flex; flex-wrap:wrap; gap:5px 6px; align-items:center; margin-top:5px;}
+.budget-cat[data-status="complete"] .title-locked-text{text-decoration:line-through; opacity:.6;}
+.proj-field{display:inline-flex; align-items:center; gap:4px; flex:none; min-width:0;}
+.proj-field-label{font-size:.62rem; color:var(--text-faint); white-space:nowrap;}
+
+/* ---------- Future Projects rows ----------
+   Narrow windows come first, because that's what the desktop app opens at
+   (480px): the title keeps the first line to itself and the rest of the
+   fields wrap underneath it, rather than six controls sharing one line at
+   a width where none of them would be readable. */
+#view-projects .budget-cat{padding:9px 0;}
+#view-projects .budget-cat-top .title-locked,
+#view-projects .budget-cat-top .title-input{flex:1 1 auto; min-width:0;}
+/* One height and one type size for every control in the row, so it reads
+   as a single band of fields instead of boxes of three different heights. */
+#view-projects .budget-cat-controls .project-type-input,
+#view-projects .budget-cat-controls .bc-sel,
+#view-projects .budget-cat-controls .bc-date,
+#view-projects .budget-cat-controls input[type=number]{
+  height:30px; padding:5px 7px; font-size:.74rem; border-radius:7px;
+}
+
+/* Wide enough to seat a whole record side by side: the two wrapper rows go
+   display:contents so their children all become items of one flex line,
+   turning each row into a single table row instead of a title stranded
+   above its own fields with half a window of dead space beside it. The
+   wrappers are pure layout boxes (no border, no background), so dissolving
+   them costs nothing — and keeping them in the markup is what lets the
+   same HTML fall back to the stacked layout above when the window is too
+   narrow for one line.
+
+   The delete button is ordered last because it is the first row's final
+   child in source order, which would otherwise drop it into the middle of
+   the line, between the title and the fields. */
+@media (min-width:1000px){
+  #view-budget .budget-cat,
+  #view-projects .budget-cat{display:flex; align-items:center; gap:7px; padding:6px 0;}
+  #view-budget .budget-cat-top,
+  #view-budget .budget-cat-controls,
+  #view-projects .budget-cat-top,
+  #view-projects .budget-cat-controls{display:contents;}
+  #view-budget .budget-cat-top .del-btn,
+  #view-projects .budget-cat-top .del-btn{order:9;}
+  /* Budget rows carry a different mix of controls per category (an amount
+     only when it isn't variable, a group picker only on expenses), so
+     stretching them into shared columns would land them at a different x
+     on every row. The title absorbs the slack instead and the controls
+     keep their own widths, which lines their right-hand edge up down the
+     list even where the set of controls differs. */
+  #view-budget .budget-cat-top .title-locked,
+  #view-budget .budget-cat-top .title-input{flex:1 1 0; min-width:110px;}
+  #view-projects .budget-cat-top .title-locked,
+  #view-projects .budget-cat-top .title-input{flex:1.5 1 0;}
+  #view-projects .budget-cat-controls > .proj-field{flex:1.1 1 0;}
+  #view-projects .budget-cat-controls > .proj-field-type{flex:1.5 1 0;}
+  #view-projects .budget-cat-controls > .proj-field-money{flex:1 1 0;}
+  #view-projects .budget-cat-controls > .bc-sel{flex:1.2 1 0;}
+  #view-projects .budget-cat-controls > .bc-date{flex:1.2 1 0;}
+  /* The inputs have fixed widths of their own for the stacked layout —
+     let them fill the column they've been given instead. */
+  #view-projects .proj-field > input,
+  #view-projects .proj-field > .dollar-field{flex:1 1 auto; width:auto; min-width:0;}
+}
+.project-toolbar-row{display:flex; flex-wrap:wrap; gap:6px; align-items:center; margin-bottom:6px;}
+.project-search{
+  flex:1; border:1px solid var(--border); background:var(--bg-sunken); color:var(--text);
+  border-radius:7px; padding:8px 10px; font-size:.82rem; font-family:inherit;
+}
+.sort-dir-btn{
+  flex:none; width:36px; height:36px; border-radius:8px; border:1px solid var(--border);
+  background:var(--bg-elev); color:var(--text); font-size:1rem; cursor:pointer; line-height:1;
+}
+.sort-dir-btn:active{background:var(--bg-sunken);}
+.project-type-input{
+  border:1px solid var(--border); background:var(--bg-sunken); color:var(--text);
+  border-radius:7px; padding:5px 7px; font-size:.76rem; font-family:inherit; width:108px;
+}
+.drag-handle{
+  flex:none; width:22px; height:22px; border-radius:6px; color:var(--text-faint);
+  display:flex; align-items:center; justify-content:center; cursor:grab;
+  touch-action:none; -webkit-user-select:none; user-select:none;
+}
+.drag-handle:active{cursor:grabbing; color:var(--accent);}
+.priority-badge{
+  flex:none; font-size:.66rem; font-weight:800; color:var(--text-faint);
+  background:var(--bg-sunken); border-radius:999px; padding:2px 7px; font-variant-numeric:tabular-nums;
+  /* Fixed width so #9 → #10 doesn't shift the whole row out of column. */
+  min-width:30px; text-align:center;
+}
+.budget-cat.dragging{opacity:.5; box-shadow:0 0 0 1.5px var(--accent) inset; border-radius:10px;}
 .budget-cat input[type=text]{
   border:1px solid var(--border); background:var(--bg-sunken); color:var(--text);
   border-radius:7px; padding:6px 7px; font-size:.82rem; width:100%; flex:1;
@@ -320,7 +409,16 @@ table.mgrid tr.row-balance td{color:var(--accent);}
 .due-badge-inline{font-size:.85em; color:var(--text-faint); font-weight:400;}
 .bc-sel, .bc-date{
   border:1px solid var(--border); background:var(--bg-sunken); color:var(--text);
-  border-radius:7px; padding:4px 5px; font-size:.7rem; flex:none;
+  border-radius:7px; padding:4px 5px; font-size:.7rem;
+  /* flex-shrink:0 (what "flex:none" used to set here) let a <select>'s
+     native content width — driven by its longest option text, e.g.
+     "Priority (drag to reorder)" — push the control past the edge of a
+     narrow screen instead of wrapping, since a flex item isn't allowed to
+     move to a new line AND also refuse to shrink to fit the line it's on.
+     Letting it shrink (and uncapping the default content-based min-width)
+     means it clips its own displayed text first, which is recoverable —
+     overflowing off the visible screen entirely is not. */
+  flex:0 1 auto; min-width:0; max-width:100%;
 }
 
 /* ---------- Locked title fields (require double-click/pencil to edit) ---------- */
@@ -561,6 +659,17 @@ table.mgrid tr.row-balance td{color:var(--accent);}
     </div>
   </section>
 
+  <!-- ===================== FUTURE PROJECTS ===================== -->
+  <section id="view-projects" class="view">
+    <div class="section-title">Future Projects</div>
+    <div class="card">
+      <div class="faint" style="font-size:.72rem; margin-bottom:8px;">A someday/maybe list — ideas and projects you're thinking about, not tied to a budget or dollar amount.</div>
+      <div id="projects-toolbar"></div>
+      <div id="projects-list"></div>
+      <button class="add-btn" onclick="addFutureProject()">+ Add project</button>
+    </div>
+  </section>
+
 </main>
 
 <nav class="tabbar">
@@ -580,6 +689,10 @@ table.mgrid tr.row-balance td{color:var(--accent);}
     <span class="tab-badge" id="budget-start-badge">Start here</span>
     <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 6h16M4 12h16M4 18h10"/></svg>
     Budget
+  </button>
+  <button data-tab="projects" onclick="showTab('projects')">
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 2l2.4 6.6L21 10l-5 4.3L17.5 21 12 17.5 6.5 21 8 14.3 3 10l6.6-1.4z"/></svg>
+    Projects
   </button>
 </nav>
 
@@ -665,17 +778,24 @@ function normalizeAccountValue(accountId, value){
   return (acct && acct.debt) ? -Math.abs(value) : value;
 }
 
+// Seed list for Future Projects' "Type" field — the live, editable list a
+// user can add their own values to (typed directly into the field) is
+// state.projectTypes, same seed/live split as accounts above.
+const DEFAULT_PROJECT_TYPES = ['Home Improvement', 'Vacation', 'Vehicle', 'Rental Property', 'Other'];
+
 function freshState(){
   const accountDefs = JSON.parse(JSON.stringify(DEFAULT_ACCOUNTS));
   const accounts = { updatedAt: null };
   for(const a of accountDefs) accounts[a.id] = 0;
   return {
-    version: 8,
+    version: 11,
     accounts,
     accountDefs,
     categories: JSON.parse(JSON.stringify(DEFAULT_CATEGORIES)),
     weeks: {},   // key: 'YYYY-MM-DD' (friday) -> { income:{id:{override,actual,checked}}, expense:{...}, <accountId>:null, ... }
-    months: {}   // key: 'YYYY-MM' -> { start:{<accountId>:n, ...}, startCapturedAt }
+    months: {},  // key: 'YYYY-MM' -> { start:{<accountId>:n, ...}, startCapturedAt }
+    futureProjects: [],  // freeform "someday/maybe" list — { id, title, status, type, priority, estimatedPrice, actualPrice, estimatedDate }
+    projectTypes: JSON.parse(JSON.stringify(DEFAULT_PROJECT_TYPES))
   };
 }
 
@@ -887,6 +1007,28 @@ function migrateState(parsed){
     // nothing changes for existing users until they add/rename/remove one.
     if(!parsed.accountDefs) parsed.accountDefs = JSON.parse(JSON.stringify(DEFAULT_ACCOUNTS));
     parsed.version = 8;
+  }
+  if((parsed.version||1) < 9){
+    if(!parsed.futureProjects) parsed.futureProjects = [];
+    parsed.version = 9;
+  }
+  if((parsed.version||1) < 10){
+    if(!parsed.projectTypes) parsed.projectTypes = JSON.parse(JSON.stringify(DEFAULT_PROJECT_TYPES));
+    // Backfill fields added after projects already existed. Priority
+    // defaults to the array's existing order, so nobody's list visibly
+    // reshuffles the first time they open the app post-update.
+    (parsed.futureProjects||[]).forEach((p,i) => {
+      if(p.type===undefined) p.type = null;
+      if(p.priority===undefined) p.priority = i;
+    });
+    parsed.version = 10;
+  }
+  if((parsed.version||1) < 11){
+    // The notes field was removed from projects. Drop the stored text
+    // rather than leave it as a dead key that nothing reads but exports
+    // and backups keep carrying around forever.
+    (parsed.futureProjects||[]).forEach(p => { delete p.notes; });
+    parsed.version = 11;
   }
   return parsed;
 }
@@ -1741,6 +1883,302 @@ function lockAccountTitle(id, value){
   deferRenderAll();
 }
 
+/* =========================================================================
+   FUTURE PROJECTS — a freeform "someday/maybe" list, not tied to the budget
+   ========================================================================= */
+const PROJECT_STATUSES = [
+  { id:'someday', label:'Someday/Maybe' },
+  { id:'planning', label:'Planning' },
+  { id:'inprogress', label:'In Progress' },
+  { id:'complete', label:'Complete' },
+];
+function projectStatusLabel(id){
+  const s = PROJECT_STATUSES.find(s=>s.id===id);
+  return s ? s.label : PROJECT_STATUSES[0].label;
+}
+
+const PROJECT_SORT_FIELDS = [
+  { id:'priority', label:'Priority' },
+  { id:'added', label:'Date added' },
+  { id:'title', label:'Title' },
+  { id:'status', label:'Status' },
+  { id:'estimatedPrice', label:'Estimated price' },
+  { id:'actualPrice', label:'Actual price' },
+  { id:'estimatedDate', label:'Estimated date' },
+];
+// Sort/filter choices are view preferences, not budget data — kept as plain
+// UI state (like activeTab/currentWeekKey) rather than in `state`, so they
+// don't need a migration and never end up in an exported backup.
+let projectSortField = 'priority';
+let projectSortDir = 'asc';
+let projectFilterStatus = 'all';
+let projectFilterSearch = '';
+
+function projectStatusRank(p){
+  const i = PROJECT_STATUSES.findIndex(s=>s.id===(p.status||'someday'));
+  return i===-1 ? 0 : i;
+}
+// Nulls/blanks always sort last, regardless of direction, so switching
+// direction reorders what you've actually filled in instead of shuffling
+// the blank entries to the opposite end of the list.
+// `dir` only flips the ordering of items that actually HAVE a value for
+// this field — a blank estimated price/date always sorts last, in both
+// directions, rather than jumping to the front when you switch to
+// descending (which is what a naive sort-then-reverse() would do).
+function compareProjects(a, b, field, dir){
+  const m = dir==='desc' ? -1 : 1;
+  if(field==='title') return m * (a.title||'').localeCompare(b.title||'');
+  if(field==='status') return m * (projectStatusRank(a) - projectStatusRank(b));
+  if(field==='estimatedPrice' || field==='actualPrice'){
+    const av = a[field], bv = b[field];
+    const aMissing = av===null || av===undefined, bMissing = bv===null || bv===undefined;
+    if(aMissing || bMissing) return aMissing && bMissing ? 0 : (aMissing ? 1 : -1);
+    return m * (av - bv);
+  }
+  if(field==='estimatedDate'){
+    const av = a.estimatedDate, bv = b.estimatedDate;
+    if(!av || !bv) return (!av && !bv) ? 0 : (!av ? 1 : -1);
+    return m * (av < bv ? -1 : av > bv ? 1 : 0);
+  }
+  if(field==='added'){
+    // a dedicated monotonic counter, not the id (which now has a random
+    // suffix for uniqueness and is no longer safe to sort by as text).
+    return m * ((a.order||0) - (b.order||0));
+  }
+  // 'priority' — the order you've dragged things into; the direction
+  // toggle still applies here too, same as every other field, so flipping
+  // it shows your list back-to-front rather than doing nothing.
+  return m * ((a.priority||0) - (b.priority||0));
+}
+function sortProjects(list){
+  return list.slice().sort((a,b) => compareProjects(a,b,projectSortField,projectSortDir));
+}
+function filterProjects(list){
+  let out = list;
+  if(projectFilterStatus!=='all') out = out.filter(p => (p.status||'someday')===projectFilterStatus);
+  const q = projectFilterSearch.trim().toLowerCase();
+  if(q) out = out.filter(p => (p.title||'').toLowerCase().includes(q));
+  return out;
+}
+
+function setProjectSort(field){ projectSortField = field; deferRenderAll(); }
+function toggleProjectSortDir(){ projectSortDir = projectSortDir==='asc' ? 'desc' : 'asc'; deferRenderAll(); }
+function setProjectFilterStatus(status){ projectFilterStatus = status; deferRenderAll(); }
+function setProjectFilterSearch(value){ projectFilterSearch = value; deferRenderAll(); }
+
+function renderProjectToolbar(){
+  const html = `
+    <div class="project-toolbar-row">
+      <select class="bc-sel" onchange="setProjectSort(this.value)" title="Sort by">
+        ${PROJECT_SORT_FIELDS.map(f=>`<option value="${f.id}" ${projectSortField===f.id?'selected':''}>Sort: ${f.label}</option>`).join('')}
+      </select>
+      <button type="button" class="sort-dir-btn" onclick="toggleProjectSortDir()" title="${projectSortDir==='asc'?'Ascending — click for descending':'Descending — click for ascending'}" aria-label="Toggle sort direction">${projectSortDir==='asc'?'&uarr;':'&darr;'}</button>
+    </div>
+    <div class="project-toolbar-row">
+      <select class="bc-sel" onchange="setProjectFilterStatus(this.value)" title="Filter by status">
+        <option value="all" ${projectFilterStatus==='all'?'selected':''}>All statuses</option>
+        ${PROJECT_STATUSES.map(s=>`<option value="${s.id}" ${projectFilterStatus===s.id?'selected':''}>${s.label}</option>`).join('')}
+      </select>
+      <input type="text" class="project-search" data-field-key="projsearch" placeholder="Search titles…" value="${escapeHTML(projectFilterSearch)}" oninput="setProjectFilterSearch(this.value)">
+    </div>
+    ${projectSortField==='priority' && projectSortDir!=='asc' ? `<div class="faint" style="font-size:.68rem; margin-top:2px;">Drag to reorder only works sorted ascending by Priority.</div>` : ''}
+    ${(projectFilterStatus!=='all' || projectFilterSearch.trim()) ? `<div class="faint" style="font-size:.68rem; margin-top:2px;">Drag to reorder and auto-add-on-Tab are off while a filter is active.</div>` : ''}
+    <datalist id="project-types-datalist">
+      ${state.projectTypes.map(t=>`<option value="${escapeHTML(t)}"></option>`).join('')}
+    </datalist>
+  `;
+  document.getElementById('projects-toolbar').innerHTML = html;
+}
+
+function renderProjects(){
+  renderProjectToolbar();
+  const all = state.futureProjects;
+  const list = sortProjects(filterProjects(all));
+  const emptyMsg = all.length===0 ? 'None yet.' : 'No projects match your filter.';
+  const dragOn = projectDragEnabled();
+  const showPriorityBadge = projectSortField==='priority';
+  const html = (list.length===0 ? `<div class="empty-hint">${emptyMsg}</div>` : list.map((p,idx) => {
+    const isLastRow = idx===list.length-1;
+    return `
+    <div class="budget-cat" data-status="${p.status||'someday'}" data-project-id="${p.id}">
+      <div class="budget-cat-top">
+        ${dragOn ? `<span class="drag-handle" tabindex="-1" onpointerdown="startProjectDrag(event,'${p.id}')" onpointermove="onProjectDragMove(event)" onpointerup="endProjectDrag(event)" onpointercancel="endProjectDrag(event)" title="Drag to reorder" aria-label="Drag to reorder"><svg viewBox="0 0 24 24" width="15" height="15" fill="currentColor"><circle cx="8" cy="6" r="1.6"/><circle cx="8" cy="12" r="1.6"/><circle cx="8" cy="18" r="1.6"/><circle cx="16" cy="6" r="1.6"/><circle cx="16" cy="12" r="1.6"/><circle cx="16" cy="18" r="1.6"/></svg></span>` : ''}
+        ${showPriorityBadge ? `<span class="priority-badge">#${idx+1}</span>` : ''}
+        ${renderProjectTitleField(p.id, p.title)}
+        <button class="del-btn" tabindex="-1" onclick="removeFutureProject('${p.id}')" aria-label="Remove project">&times;</button>
+      </div>
+      <div class="budget-cat-controls">
+        <span class="proj-field proj-field-type"><span class="proj-field-label">Type</span><input type="text" class="project-type-input" list="project-types-datalist" data-field-key="projtype:${p.id}" value="${escapeHTML(p.type||'')}" placeholder="Type" onchange="setFutureProjectType('${p.id}', this.value)"></span>
+        <select class="bc-sel" data-field-key="projstatus:${p.id}" onchange="setFutureProjectStatus('${p.id}', this.value)" title="Status">
+          ${PROJECT_STATUSES.map(s=>`<option value="${s.id}" ${(p.status||'someday')===s.id?'selected':''}>${s.label}</option>`).join('')}
+        </select>
+        <span class="proj-field proj-field-money"><span class="proj-field-label">Est.</span><span class="dollar-field tight"><input type="number" step="1" inputmode="numeric" data-field-key="projest:${p.id}" value="${p.estimatedPrice!==null&&p.estimatedPrice!==undefined?p.estimatedPrice:''}" placeholder="0" onclick="this.select()" onchange="setFutureProjectEstimatedPrice('${p.id}', this.value)"></span></span>
+        <span class="proj-field proj-field-money"><span class="proj-field-label">Actual</span><span class="dollar-field tight"><input type="number" step="1" inputmode="numeric" data-field-key="projact:${p.id}" value="${p.actualPrice!==null&&p.actualPrice!==undefined?p.actualPrice:''}" placeholder="0" onclick="this.select()" onchange="setFutureProjectActualPrice('${p.id}', this.value)"></span></span>
+        <input type="date" class="bc-date" data-field-key="projdate:${p.id}" value="${p.estimatedDate||''}" onchange="setFutureProjectDate('${p.id}', this.value)" title="Estimated date" ${isLastRow ? `onkeydown="handleProjectLastFieldTab(event,'${p.id}')"` : ''}>
+      </div>
+    </div>
+  `;
+  }).join('')) ;
+  document.getElementById('projects-list').innerHTML = html;
+}
+
+function addFutureProject(){
+  // Date.now() alone can collide if two projects are added within the same
+  // millisecond (trivially reachable from a script, and find()-by-id would
+  // then silently edit the wrong one) — add a random suffix so ids are
+  // always unique regardless of timing. `order` is the actual sort key for
+  // "Date added", kept separate from the id so it can't be thrown off by
+  // that suffix.
+  const id = 'proj_' + Date.now() + '_' + Math.random().toString(36).slice(2,8);
+  const order = state.futureProjects.reduce((max,p)=>Math.max(max, p.order||0), 0) + 1;
+  const priority = state.futureProjects.reduce((max,p)=>Math.max(max, p.priority||0), -1) + 1;
+  state.futureProjects.push({ id, title:'New project', status:'someday', type:null, estimatedPrice:null, actualPrice:null, estimatedDate:null, order, priority });
+  saveState();
+  renderProjects();
+  unlockProjectTitle(id);
+}
+function removeFutureProject(id){
+  state.futureProjects = state.futureProjects.filter(p=>p.id!==id);
+  saveState();
+  renderProjects();
+}
+function renameFutureProject(id, title){
+  const p = state.futureProjects.find(p=>p.id===id);
+  if(p){ p.title = title; saveState(); }
+}
+function setFutureProjectStatus(id, status){
+  const p = state.futureProjects.find(p=>p.id===id);
+  if(!p) return;
+  p.status = PROJECT_STATUSES.some(s=>s.id===status) ? status : 'someday';
+  saveState();
+  deferRenderAll();
+}
+function setFutureProjectEstimatedPrice(id, val){
+  const p = state.futureProjects.find(p=>p.id===id);
+  if(p){ p.estimatedPrice = val===''? null : wholeDollar(val); saveState(); }
+}
+function setFutureProjectActualPrice(id, val){
+  const p = state.futureProjects.find(p=>p.id===id);
+  if(p){ p.actualPrice = val===''? null : wholeDollar(val); saveState(); }
+}
+function setFutureProjectDate(id, val){
+  const p = state.futureProjects.find(p=>p.id===id);
+  if(p){ p.estimatedDate = val || null; saveState(); }
+}
+// Type is a free-text field with a <datalist> of suggestions, not a fixed
+// dropdown — typing any new value both sets it on this project AND adds it
+// to the suggestion list for every other project, the same "pick from a
+// list, or just type your own" combo-box pattern as a native <input list>.
+function setFutureProjectType(id, value){
+  const p = state.futureProjects.find(p=>p.id===id);
+  if(!p) return;
+  const trimmed = (value||'').trim();
+  p.type = trimmed || null;
+  if(trimmed && !state.projectTypes.includes(trimmed)) state.projectTypes.push(trimmed);
+  saveState();
+  deferRenderAll();
+}
+
+// Tabbing out of the LAST field (Date) of the LAST visible project adds a
+// new one and moves focus straight into it (addFutureProject() already
+// unlocks and focuses the new title), so a full keyboard-only entry
+// session is just "type, Tab, type, Tab, ..." without ever reaching for
+// the mouse. Only active with no filter applied — a filter can hide where
+// the new project would land, which would make the jump look like nothing
+// happened.
+function handleProjectLastFieldTab(event, id){
+  if(event.key!=='Tab' || event.shiftKey) return;
+  if(!(projectFilterStatus==='all' && !projectFilterSearch.trim())) return;
+  const list = sortProjects(filterProjects(state.futureProjects));
+  if(list.length===0 || list[list.length-1].id!==id) return;
+  event.preventDefault();
+  addFutureProject();
+}
+
+// Drag-to-reorder sets Priority directly — only meaningful (and only
+// offered) in the one view where visual top-to-bottom order IS priority
+// order: sorted by Priority, ascending, with no filter hiding any rows.
+function projectDragEnabled(){
+  return projectSortField==='priority' && projectSortDir==='asc' && projectFilterStatus==='all' && !projectFilterSearch.trim();
+}
+let projectDrag = null; // { id, pointerId }
+function startProjectDrag(event, id){
+  if(!projectDragEnabled()) return;
+  projectDrag = { id, pointerId: event.pointerId };
+  try{ event.currentTarget.setPointerCapture(event.pointerId); }catch(e){}
+  const card = event.currentTarget.closest('.budget-cat');
+  if(card) card.classList.add('dragging');
+  event.preventDefault();
+}
+function onProjectDragMove(event){
+  if(!projectDrag || event.pointerId!==projectDrag.pointerId) return;
+  const container = document.getElementById('projects-list');
+  if(!container) return;
+  const cards = Array.from(container.querySelectorAll('.budget-cat[data-project-id]'));
+  const draggedEl = cards.find(c => c.dataset.projectId===projectDrag.id);
+  if(!draggedEl) return;
+  const after = cards.find(c => {
+    if(c===draggedEl) return false;
+    const r = c.getBoundingClientRect();
+    return event.clientY < r.top + r.height/2;
+  });
+  if(after){
+    if(after !== draggedEl.nextSibling) container.insertBefore(draggedEl, after);
+  } else if(draggedEl.nextSibling){
+    container.appendChild(draggedEl);
+  }
+}
+function endProjectDrag(event){
+  if(!projectDrag || (event && event.pointerId!==projectDrag.pointerId)) return;
+  const container = document.getElementById('projects-list');
+  const ids = container ? Array.from(container.querySelectorAll('.budget-cat[data-project-id]')).map(c=>c.dataset.projectId) : [];
+  projectDrag = null;
+  if(ids.length) reorderProjectsByIds(ids);
+  renderProjects();
+}
+// Pure and independently testable: given the ids in their new visual
+// order, renumber every project's priority to match. Anything not present
+// in `ids` (there shouldn't be any — this only runs with no filter active)
+// keeps its existing relative order, appended after the reordered ones,
+// so a reorder can never silently drop a project.
+function reorderProjectsByIds(ids){
+  const byId = new Map(state.futureProjects.map(p=>[p.id,p]));
+  const reordered = [];
+  for(const id of ids){
+    const p = byId.get(id);
+    if(p){ reordered.push(p); byId.delete(id); }
+  }
+  for(const p of byId.values()) reordered.push(p);
+  reordered.forEach((p,i) => { p.priority = i; });
+  state.futureProjects = reordered;
+  saveState();
+}
+
+const unlockedProjectTitles = new Set();
+function renderProjectTitleField(id, name){
+  if(unlockedProjectTitles.has(id)){
+    return `<input type="text" class="title-input" data-title-input="proj:${id}" data-field-key="projtitle:${id}" value="${escapeHTML(name)}" onblur="lockProjectTitle('${id}', this.value)" onkeydown="if(event.key==='Enter') this.blur()">`;
+  }
+  return `<span class="title-locked" ondblclick="unlockProjectTitle('${id}')" title="Double-click to rename">
+    <span class="title-locked-text">${escapeHTML(name)}</span>
+    <button type="button" class="title-edit-btn" tabindex="-1" onclick="unlockProjectTitle('${id}')" aria-label="Rename">&#9998;</button>
+  </span>`;
+}
+function unlockProjectTitle(id){
+  unlockedProjectTitles.add(id);
+  renderProjects();
+  requestAnimationFrame(()=>{
+    const el = document.querySelector(`[data-title-input="proj:${id}"]`);
+    if(el){ el.focus(); el.select(); }
+  });
+}
+function lockProjectTitle(id, value){
+  const trimmed = value.trim();
+  if(trimmed !== '') renameFutureProject(id, trimmed);
+  unlockedProjectTitles.delete(id);
+  deferRenderAll();
+}
+
 function renderBudgetRows(kind){
   const cats = state.categories[kind];
   if(cats.length===0) return `<div class="empty-hint">None yet.</div>`;
@@ -2026,6 +2464,7 @@ function renderAll(){
   if(activeTab==='weekly') renderWeekly();
   if(activeTab==='monthly') renderMonthly();
   if(activeTab==='budget') renderBudget();
+  if(activeTab==='projects') renderProjects();
 }
 
 // Re-rendering a list (Budget rows, grid cells, etc.) replaces those DOM

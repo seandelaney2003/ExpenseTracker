@@ -41,12 +41,19 @@ FileReader, mocked Tauri promises).
 | `import-export.test.js` | Backup import (old schemas included), export, round-trip, reset |
 | `tauri-backup.test.js` | The desktop Rust-file mirror and self-healing (incl. never overwriting the backup before reading it) |
 | `integrity.test.js` | JS↔Rust command names, stable app identifier + storage key, forced theme, `home.html` returning-user redirect, missing element ids / undefined handlers |
+| `projects.test.js` | Future Projects: migration-safe schema change (type/priority backfill, dropping removed fields), status/type/price/date editing, sort + filter combinations, id-collision-proof adds, drag-reorder logic, Tab-to-add-a-row, every gating condition on when drag/Tab-to-add are offered |
 
 ## Known limits
 
 This checks logic, data, and wiring. It does **not** render CSS or run a real
 WebView2/WKWebView, so purely visual problems (layout, colours, off-screen
-elements) and OS-level behaviour still need eyes on a real build.
+elements) and OS-level behaviour still need eyes on a real build. The fake
+DOM also doesn't parse `innerHTML` into a real traversable tree, so the
+pointer-drag functions that read live element positions/order
+(`onProjectDragMove`, the DOM-reading half of `endProjectDrag`) can't be
+exercised end-to-end here — only the pure reorder logic they call
+(`reorderProjectsByIds`) and the gating logic (`projectDragEnabled`) are
+covered. Drag-and-drop itself needs a hands-on check in a real build.
 
 ## When you fix a bug
 

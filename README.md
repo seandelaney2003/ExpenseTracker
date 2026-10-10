@@ -12,9 +12,9 @@ This guide explains how the tool works and how a new user should set it up and u
   - **`home.html`** — the introduction/landing page: what the tool is, how it works, and a link into the app.
   - **`index.html`** — the actual tracker. This is the single source of truth for the app's code — every other packaging of it (desktop, mobile) wraps this exact file rather than maintaining a separate copy.
 - **`desktop-app/`** — packages `index.html` as an installable Windows/Mac/Linux desktop app (via Tauri). Not needed to just use the tracker in a browser. See `desktop-app/README.md` for build instructions — installers can be built locally, or via the included GitHub Actions workflow (recommended, and required on Windows machines with Smart App Control enabled, which blocks local Rust builds).
-- All data is stored locally in the browser's `localStorage`. Nothing is sent anywhere. Data does not sync between devices or browsers automatically (see [Backing up and moving your data](#9-backing-up-and-moving-your-data)).
+- All data is stored locally in the browser's `localStorage`. Nothing is sent anywhere. Data does not sync between devices or browsers automatically (see [Backing up and moving your data](#10-backing-up-and-moving-your-data)).
 - Built around a simple idea: **every week ends on a Friday.** All income and expenses are organized into these Friday-ending weeks, which roll up into months.
-- Four tabs in the app, reached from the bottom navigation bar: **Home**, **Weekly**, **Monthly**, **Budget**.
+- Five tabs in the app, reached from the bottom navigation bar: **Home**, **Weekly**, **Monthly**, **Budget**, **Projects**.
 
 ---
 
@@ -155,7 +155,31 @@ Category names are locked by default to prevent accidental edits. **Double-click
 
 ---
 
-## 8. How to fill in the information — a step-by-step first run
+## 8. The Future Projects tab
+
+A "someday/maybe" list for things you're thinking about — a renovation, a trip, anything you don't want to forget but aren't ready to fold into your weekly budget yet. It's intentionally separate from the rest of the app: nothing here affects your actual budget, accounts, or weekly totals — it's just a place to plan and estimate.
+
+- Tap **+ Add project** to create one.
+- **Double-click** the title (or tap the pencil icon) to rename it, same as category and account names.
+- **Type** — pick from **Home Improvement**, **Vacation**, **Vehicle**, **Rental Property**, or **Other**, or just type your own — anything you type is remembered and offered as a suggestion on every other project too.
+- **Status** — a dropdown: **Someday/Maybe**, **Planning**, **In Progress**, or **Complete**. Marking a project Complete gives its title a strikethrough so finished projects stay visible but clearly out of the way.
+- **Est.** and **Actual** — optional whole-dollar price fields, so you can compare what you guessed a project would cost against what it actually ran.
+- **Date** — an optional estimated date for the project.
+- Use the **×** button to remove one you no longer want to track.
+
+Widen the window and each project collapses onto a single line, turning the list into a table you can scan a column at a time. In a narrow window the fields wrap underneath the title instead.
+
+**Keyboard entry.** Fields tab in a natural left-to-right order: Title, Type, Status, Estimated price, Actual price, Date. Press **Tab** from the Date field of the last project in the list and a new project is added automatically with its title ready to type — so a whole list can be typed in without reaching for the mouse. This only kicks in when no filter is hiding where the new project would land.
+
+**Priority and drag-to-reorder.** Every project has a priority — shown as a **#1, #2, ...** badge — that starts out matching the order you added things in. Drag the handle (⠿) on the left of a project to reorder the list into whatever order actually matters to you. Dragging only works in the default view: sorted by **Priority**, ascending, with no filter active — switching the sort or direction, or applying a filter, hides the drag handle rather than let a drag silently not do what it looks like it's doing.
+
+**Sorting and filtering** — above the list:
+- **Sort by** any field (Priority, Date added, Title, Status, Estimated price, Actual price, Estimated date), with a button next to it to flip between ascending and descending. Projects with no price or date set always sort to the end, in either direction.
+- **Filter by status** with a dropdown, and **search** by title — both apply together.
+
+---
+
+## 9. How to fill in the information — a step-by-step first run
 
 **Step 1 — Set up your categories (Budget tab).**
 Go to Budget. The app ships with a starter set of common categories (Paycheck 1/2, Mortgage, Electric, Food/Groceries, etc.) — rename, delete, or add to them until the list matches your real bills and income sources. For each one:
@@ -181,7 +205,7 @@ That's the entire loop: set it up once, then check boxes and update balances as 
 
 ---
 
-## 9. Backing up and moving your data
+## 10. Backing up and moving your data
 
 Because everything lives in the browser's local storage, it is tied to **one browser on one device**. To move data to a new device, a different browser, or just keep a safety copy:
 
@@ -192,7 +216,7 @@ There is no automatic cloud sync. Export regularly if the data matters to you.
 
 ---
 
-## 10. Good to know
+## 11. Good to know
 
 - All dollar amounts are whole dollars — no cents. Every dollar field shows a `$` prefix and has no spinner arrows; type the number directly.
 - Pressing Tab moves between fields in order, the same as any form.
