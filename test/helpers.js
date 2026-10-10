@@ -3,6 +3,13 @@ const { loadApp } = require('./load-app');
 
 const STORAGE_KEY = 'expenseTrackerData.v1';
 
+// The app's current state-schema version, read from the real code rather
+// than hardcoded — every migration bump so far has meant hunting down and
+// updating a handful of literal version numbers scattered across test
+// files; this makes that whole class of busywork (and the risk of missing
+// one) go away for good.
+const CURRENT_VERSION = loadApp().app.freshState().version;
+
 // Resolves after pending timers/microtasks (deferRenderAll, FileReader,
 // mocked Tauri invoke promises, alert deferral) have all had a chance to run.
 // Objects built inside the VM sandbox have a different Object.prototype than
@@ -49,4 +56,4 @@ function addCategoryDirect(h, kind, cat){
 // Fake import "event" as the file input's onchange would deliver it.
 const importEvent = (text) => ({ target: { files: [{ __text: text }], value: 'x' } });
 
-module.exports = { STORAGE_KEY, plain, tick, v7Backup, bootWith, addCategoryDirect, importEvent, loadApp };
+module.exports = { STORAGE_KEY, CURRENT_VERSION, plain, tick, v7Backup, bootWith, addCategoryDirect, importEvent, loadApp };

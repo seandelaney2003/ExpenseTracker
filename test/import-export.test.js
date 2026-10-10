@@ -2,7 +2,7 @@
 // crashed on any backup saved before accounts became editable.
 const { test, describe } = require('node:test');
 const assert = require('node:assert/strict');
-const { STORAGE_KEY, plain, tick, v7Backup, loadApp, importEvent } = require('./helpers');
+const { STORAGE_KEY, CURRENT_VERSION, plain, tick, v7Backup, loadApp, importEvent } = require('./helpers');
 
 describe('importData', () => {
   test('imports an older-schema (v7) backup: migrated, persisted, and every screen renders', async () => {
@@ -13,7 +13,7 @@ describe('importData', () => {
 
     const s = h.get('state');
     assert.equal(alerts.length, 0);
-    assert.equal(s.version, 8);
+    assert.equal(s.version, CURRENT_VERSION);
     assert.equal(s.accountDefs.length, 6);
     assert.equal(s.accounts.checking, 11747);
     assert.equal(JSON.parse(h.localStorage.getItem(STORAGE_KEY)).accounts.checking, 11747, 'persisted immediately');

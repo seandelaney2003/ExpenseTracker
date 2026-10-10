@@ -3,15 +3,15 @@
 // this app has shipped lived in this area.
 const { test, describe } = require('node:test');
 const assert = require('node:assert/strict');
-const { STORAGE_KEY, plain, tick, v7Backup, bootWith, loadApp } = require('./helpers');
+const { STORAGE_KEY, CURRENT_VERSION, plain, tick, v7Backup, bootWith, loadApp } = require('./helpers');
 
 const BADGE_KEY = 'expenseTrackerData.v1.seenBudgetStartBadge';
 
 describe('fresh install', () => {
-  test('boots with the default six accounts, version 8, no weeks/months', () => {
+  test('boots with the default six accounts, current version, no weeks/months', () => {
     const h = loadApp();
     const state = h.get('state');
-    assert.equal(state.version, 8);
+    assert.equal(state.version, CURRENT_VERSION);
     assert.deepEqual(plain(state.accountDefs.map(a => a.id)), ['checking', 'savings', 'otherBank', 'creditCard1', 'creditCard2', 'otherDebt']);
     assert.deepEqual(plain(state.accountDefs.filter(a => a.debt).map(a => a.id)), ['creditCard1', 'creditCard2', 'otherDebt']);
     for (const a of state.accountDefs) assert.equal(state.accounts[a.id], 0);
@@ -120,7 +120,7 @@ describe('migrations from every historical schema', () => {
   test('a v7 backup (the real-world shape) migrates to v8 keeping every balance and adding accountDefs', () => {
     const h = bootWith(v7Backup());
     const s = h.get('state');
-    assert.equal(s.version, 8);
+    assert.equal(s.version, CURRENT_VERSION);
     assert.equal(s.accountDefs.length, 6);
     assert.equal(s.accounts.checking, 11747);
     assert.equal(s.accounts.savings, 34132);
@@ -133,6 +133,8 @@ describe('migrations from every historical schema', () => {
   // Regression: v4/v5 migration blocks once referenced state.accountDefs,
   // which doesn't exist yet while migrateState() runs inside loadState() at
   // startup — a TDZ crash on ANY pre-v8 data. Booting at all is the assertion.
+  // (CURRENT_VERSION below tracks whatever migrateState() currently lands on,
+  // so this doesn't go stale every time a new migration version ships.)
   for (const version of [1, 2, 3, 4, 5, 6, 7]) {
     test(`booting from version ${version} data does not throw (no use-before-init in migration blocks)`, () => {
       const old = v7Backup({ version });
@@ -141,7 +143,7 @@ describe('migrations from every historical schema', () => {
         old.months = { '2026-08': { startChecking: 1, startSavings: 2 } };
       }
       assert.doesNotThrow(() => bootWith(old));
-      assert.equal(bootWith(old).get('state').version, 8);
+      assert.equal(bootWith(old).get('state').version, CURRENT_VERSION);
     });
   }
 

@@ -4,7 +4,7 @@
 // statically in integrity.test.js and compiled in CI).
 const { test, describe } = require('node:test');
 const assert = require('node:assert/strict');
-const { STORAGE_KEY, plain, tick, v7Backup, bootWith, loadApp } = require('./helpers');
+const { STORAGE_KEY, CURRENT_VERSION, plain, tick, v7Backup, bootWith, loadApp } = require('./helpers');
 
 function mockTauri(fileContents){
   const calls = [];
@@ -36,7 +36,7 @@ describe('mirroring saves to the Rust-side file', () => {
   test('web version (no Tauri): saving works and nothing tries to call Tauri', () => {
     const h = loadApp();
     assert.doesNotThrow(() => h.app.saveState());
-    assert.equal(JSON.parse(h.localStorage.getItem(STORAGE_KEY)).version, 8);
+    assert.equal(JSON.parse(h.localStorage.getItem(STORAGE_KEY)).version, CURRENT_VERSION);
   });
 
   test('a failing Rust command never breaks saving (localStorage still gets the data)', async () => {
@@ -71,7 +71,7 @@ describe('self-healing when browser storage comes back empty', () => {
     const h = loadApp({ tauri: t.invoke });
     h.fireDOMContentLoaded();
     await tick();
-    assert.equal(h.get('state').version, 8);
+    assert.equal(h.get('state').version, CURRENT_VERSION);
     assert.equal(h.get('state').accounts.savings, 34132);
     assert.equal(h.get('state').accountDefs.length, 6);
   });

@@ -52,6 +52,8 @@ function makeFakeElement(){
     querySelectorAll(){ return []; },
     closest(){ return null; },
     getBoundingClientRect(){ return { top:0, left:0, width:0, height:0, bottom:0, right:0 }; },
+    setPointerCapture(){},
+    releasePointerCapture(){},
   };
   Object.defineProperty(el, 'innerHTML', {
     get(){ return el._innerHTML; },
@@ -84,10 +86,17 @@ function makeSandbox(opts){
   const domContentLoadedListeners = [];
   const eventListeners = {};
 
+  // One stable fake element per id — matches real DOM behavior (repeated
+  // getElementById(x) calls return the same node) and lets tests inspect
+  // what a render function wrote via document.getElementById(id).innerHTML.
+  const elementsById = new Map();
   const documentStub = {
     body: makeFakeElement(),
     documentElement: makeFakeElement(),
-    getElementById(){ return makeFakeElement(); },
+    getElementById(id){
+      if(!elementsById.has(id)) elementsById.set(id, makeFakeElement());
+      return elementsById.get(id);
+    },
     querySelector(){ return null; },
     querySelectorAll(){ return []; },
     createElement(){ return makeFakeElement(); },
