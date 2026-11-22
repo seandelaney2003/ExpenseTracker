@@ -41,6 +41,7 @@ FileReader, mocked Tauri promises).
 | `import-export.test.js` | Backup import (old schemas included), export, round-trip, reset |
 | `tauri-backup.test.js` | The desktop Rust-file mirror and self-healing (incl. never overwriting the backup before reading it) |
 | `integrity.test.js` | JS↔Rust command names, stable app identifier + storage key, forced theme, `home.html` returning-user redirect, missing element ids / undefined handlers |
+| `summary.test.js` | Summary: yearly math for every schedule (checked against the forecast), savings kept out of spending, slice folding, escaping, and that viewing it never changes data |
 | `projects.test.js` | Future Projects: migration-safe schema change (type/priority backfill, dropping removed fields), status/type/price/date editing, sort + filter combinations, id-collision-proof adds, drag-reorder logic, Tab-to-add-a-row, every gating condition on when drag/Tab-to-add are offered |
 
 ## Known limits

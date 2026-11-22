@@ -467,6 +467,78 @@ describe('Type (dropdown + free entry)', () => {
   });
 });
 
+describe('removing a type', () => {
+  function withTypedProjects(opts){
+    const h = loadApp(opts);
+    h.app.addFutureProject();
+    h.app.addFutureProject();
+    h.app.addFutureProject();
+    const [a, b, c] = h.get('state').futureProjects.map(p => p.id);
+    h.app.setFutureProjectType(a, 'Vehcile');
+    h.app.setFutureProjectType(b, 'Vehcile');
+    h.app.setFutureProjectType(c, 'Vacation');
+    return h;
+  }
+  const typesOf = (h) => plain(h.get('state').futureProjects.map(p => p.type));
+
+  test('an unused type is removed straight away, with no confirmation', () => {
+    let asked = false;
+    const h = loadApp({ confirm: () => { asked = true; return true; } });
+    h.app.removeProjectType('Rental Property');
+    assert.ok(!h.get('state').projectTypes.includes('Rental Property'));
+    assert.equal(asked, false, 'nothing to clear, so nothing to confirm');
+    assert.ok(!JSON.parse(h.localStorage.getItem(STORAGE_KEY)).projectTypes.includes('Rental Property'), 'persisted immediately');
+  });
+  test('a type still in use asks first, then clears it from exactly the projects using it', () => {
+    let question = '';
+    const h = withTypedProjects({ confirm: (q) => { question = q; return true; } });
+    h.app.removeProjectType('Vehcile');
+    assert.match(question, /Vehcile.*2 projects/);
+    assert.ok(!h.get('state').projectTypes.includes('Vehcile'));
+    assert.deepEqual(typesOf(h), [null, null, 'Vacation'], 'other projects keep their type');
+  });
+  test('cancelling the confirmation changes nothing', () => {
+    const h = withTypedProjects({ confirm: () => false });
+    h.app.removeProjectType('Vehcile');
+    assert.ok(h.get('state').projectTypes.includes('Vehcile'));
+    assert.deepEqual(typesOf(h), ['Vehcile', 'Vehcile', 'Vacation']);
+  });
+  test('removing a name that isn\'t in the list is a harmless no-op', () => {
+    const h = withTypedProjects();
+    const before = plain(h.get('state').projectTypes);
+    h.app.removeProjectType('Nope');
+    assert.deepEqual(plain(h.get('state').projectTypes), before);
+    assert.deepEqual(typesOf(h), ['Vehcile', 'Vehcile', 'Vacation']);
+  });
+  test('a removed type is gone from the suggestions, and typing it again brings it back', () => {
+    const h = withTypedProjects();
+    h.app.removeProjectType('Vehcile');
+    h.app.renderProjects();
+    assert.ok(!h.app.document.getElementById('projects-toolbar').innerHTML.includes('<option value="Vehcile">'));
+    h.app.setFutureProjectType(h.get('state').futureProjects[0].id, 'Vehcile');
+    assert.ok(h.get('state').projectTypes.includes('Vehcile'));
+  });
+  test('the manage panel is closed by default and lists every type with its usage count when opened', () => {
+    const h = withTypedProjects();
+    h.app.renderProjects();
+    assert.ok(!h.app.document.getElementById('projects-toolbar').innerHTML.includes('types-panel'));
+    h.app.toggleProjectTypesPanel();
+    h.app.renderProjects();
+    const html = h.app.document.getElementById('projects-toolbar').innerHTML;
+    for (const t of h.get('state').projectTypes) assert.ok(html.includes(`data-type="${t}"`), `delete button for ${t}`);
+    assert.match(html, /Vehcile<span class="type-chip-count">2<\/span>/);
+  });
+  test('type names are escaped in the panel, so a quote in one can\'t break out of the attribute', () => {
+    const h = loadApp();
+    h.app.addFutureProject();
+    h.app.setFutureProjectType(h.get('state').futureProjects[0].id, 'Bob\'s "boat"');
+    h.app.toggleProjectTypesPanel();
+    h.app.renderProjects();
+    const html = h.app.document.getElementById('projects-toolbar').innerHTML;
+    assert.ok(html.includes('data-type="Bob&#39;s &quot;boat&quot;"'));
+  });
+});
+
 describe('migration backfills type and priority for projects that predate them', () => {
   test('a futureProjects array saved before this version gets type:null and priority matching its existing array order', () => {
     const old = v7Backup({ version: 9 });

@@ -375,6 +375,25 @@ table.mgrid tr.row-balance td{color:var(--accent);}
   background:var(--bg-elev); color:var(--text); font-size:1rem; cursor:pointer; line-height:1;
 }
 .sort-dir-btn:active{background:var(--bg-sunken);}
+.types-btn{
+  flex:none; margin-left:auto; height:36px; padding:0 12px; border-radius:8px; border:1px solid var(--border);
+  background:var(--bg-elev); color:var(--text-dim); font-size:.74rem; font-family:inherit; cursor:pointer;
+}
+.types-btn.open{color:var(--accent); border-color:var(--accent);}
+.types-panel{
+  display:flex; flex-wrap:wrap; gap:6px; align-items:center;
+  padding:8px; margin-bottom:6px; border:1px solid var(--border); border-radius:8px; background:var(--bg-sunken);
+}
+.type-chip{
+  display:inline-flex; align-items:center; gap:5px; padding:3px 3px 3px 9px; border-radius:999px;
+  background:var(--bg-elev); border:1px solid var(--border); font-size:.74rem; color:var(--text);
+}
+.type-chip-count{font-size:.62rem; color:var(--text-faint); font-variant-numeric:tabular-nums;}
+.type-chip-del{
+  border:none; background:none; color:var(--text-faint); width:20px; height:20px; border-radius:999px;
+  font-size:.85rem; line-height:1; cursor:pointer;
+}
+.type-chip-del:hover{background:var(--neg-bg); color:var(--neg);}
 .project-type-input{
   border:1px solid var(--border); background:var(--bg-sunken); color:var(--text);
   border-radius:7px; padding:5px 7px; font-size:.76rem; font-family:inherit; width:108px;
@@ -455,6 +474,66 @@ table.mgrid tr.row-balance td{color:var(--accent);}
 .btn-row{display:flex; gap:10px; flex-wrap:wrap;}
 .btn-row > *{flex:1;}
 
+/* ---------- Summary ---------- */
+/* Each group keeps its color whatever its size. Checked for color-blind separation on --bg-elev. */
+#view-summary{
+  --g-housing:#3987e5; --g-utilities:#d95926; --g-transportation:#199e70; --g-food:#c98500;
+  --g-insurance:#d55181; --g-subscriptions:#008300; --g-childcare:#9085e9; --g-personal:#e66767;
+  --g-other:#7d8983; --g-savings:#b9c9c0; --s-spending:#d95926; --s-left:#199e70;
+}
+.sum-sub{font-size:.74rem; color:var(--text-dim); margin-top:2px; line-height:1.4;}
+.sum-top{display:grid; grid-template-columns:1.35fr repeat(3,minmax(0,1fr)); gap:10px;}
+.sum-tile{background:var(--bg-sunken); border-radius:var(--radius-sm); padding:12px; min-width:0; overflow-wrap:anywhere;}
+.sum-label{font-size:.76rem; color:var(--text-dim);}
+.sum-value{font-size:1.4rem; font-weight:700; margin-top:4px;}
+.sum-hero .sum-value{font-size:2.5rem; line-height:1.1;}
+.sum-flow{margin-top:18px;}
+.sum-flow-row{display:grid; grid-template-columns:90px minmax(0,1fr); align-items:center; gap:10px; margin-top:8px; font-size:.78rem; color:var(--text-dim);}
+.sum-stack{display:flex; gap:2px; height:22px;}
+.sum-stack span{min-width:0; border-radius:4px;}
+.sum-legend{display:flex; flex-wrap:wrap; gap:6px 16px; margin:10px 0 0 100px; font-size:.76rem; color:var(--text-dim);}
+.sum-dot{display:inline-block; width:10px; height:10px; border-radius:3px; margin-right:6px; flex:none;}
+.sum-grid{display:grid; grid-template-columns:repeat(2,minmax(0,1fr)); gap:12px; margin-bottom:12px;}
+.sum-grid > .card, .sum-grid > .card + .card{margin:0; min-width:0;}
+.sum-donut-wrap{display:flex; align-items:center; justify-content:center; flex-wrap:wrap; gap:14px 22px; margin-top:14px;}
+.sum-donut{position:relative; width:210px; height:210px; flex:none;}
+.sum-donut svg{width:100%; height:100%; transform:rotate(-90deg);}
+.sum-slice{fill:none; stroke-width:24; cursor:pointer; outline:none;}
+.sum-slice:hover, .sum-slice:focus{stroke-width:30;}
+.sum-center{position:absolute; inset:48px; display:flex; flex-direction:column; align-items:center; justify-content:center; text-align:center; pointer-events:none;}
+.sum-center b{font-size:1.2rem; margin:2px 0;}
+.sum-center span{font-size:.7rem; color:var(--text-dim);}
+.sum-keys{flex:1; min-width:190px;}
+.sum-line{display:flex; align-items:center; gap:8px; padding:5px 0; font-size:.8rem;}
+.sum-name{flex:1; min-width:0; overflow-wrap:anywhere;}
+.sum-amt{font-variant-numeric:tabular-nums; text-align:right; white-space:nowrap;}
+.sum-pct{width:36px; color:var(--text-dim);}
+.sum-bar-item{margin-top:10px;}
+.sum-track{height:10px;}
+.sum-fill{display:block; height:100%; border-radius:0 4px 4px 0;}
+.sum-cols{display:grid; grid-template-columns:minmax(100px,1.2fr) minmax(0,2fr) 85px 85px 42px; gap:10px; align-items:center; font-size:.8rem;}
+.sum-head{color:var(--text-dim); font-size:.68rem; padding:12px 0 5px;}
+.sum-group{border-top:1px solid var(--border);}
+.sum-group summary{padding:10px 0; cursor:pointer; list-style:none;}
+.sum-group summary::-webkit-details-marker{display:none;}
+.sum-group summary .sum-name::after{content:'\25B8'; margin-left:6px; color:var(--text-dim);}
+.sum-group[open] summary .sum-name::after{content:'\25BE';}
+.sum-bill{padding:5px 0; color:var(--text-dim);}
+.sum-bill .sum-name{padding-left:16px;}
+.sum-bill small{display:block; font-size:.68rem;}
+.sum-total{border-top:1px solid var(--border); padding-top:8px; margin-top:6px; font-weight:700;}
+.sum-empty{text-align:center; padding:28px 16px;}
+.sum-empty .primary-btn{max-width:260px; margin-top:14px;}
+@media (max-width:759px){
+  .sum-top{grid-template-columns:repeat(3,minmax(0,1fr));}
+  .sum-hero{grid-column:1/-1;}
+  .sum-top .sum-tile:not(.sum-hero){padding:10px 8px;}
+  .sum-top .sum-tile:not(.sum-hero) .sum-value{font-size:1rem;}
+  .sum-grid{grid-template-columns:minmax(0,1fr);}
+  .sum-cols{grid-template-columns:minmax(0,1fr) 64px 70px 36px; gap:6px; font-size:.75rem;}
+  .sum-cols > .sum-track{display:none;}
+}
+
 /* ---------- Bottom nav ---------- */
 .tabbar{
   position:fixed; left:0; right:0; bottom:0; z-index:30;
@@ -477,7 +556,7 @@ table.mgrid tr.row-balance td{color:var(--accent);}
   padding:2px 6px; border-radius:999px; white-space:nowrap; letter-spacing:.2px; z-index:1;
   animation:tabBadgePulse 1.8s ease-in-out infinite;
 }
-@keyframes tabBadgePulse{0%,100%{transform:scale(1);} 50%{transform:scale(1.08);}}
+@keyframes tabBadgePulse{0%,100%{transform:translateX(-50%) scale(1);} 50%{transform:translateX(-50%) scale(1.08);}}
 
 /* ---------- Modal ---------- */
 .modal-overlay{
@@ -659,6 +738,12 @@ table.mgrid tr.row-balance td{color:var(--accent);}
     </div>
   </section>
 
+  <!-- ===================== SUMMARY ===================== -->
+  <section id="view-summary" class="view">
+    <div class="section-title">Budget Summary</div>
+    <div id="summary-body"></div>
+  </section>
+
   <!-- ===================== FUTURE PROJECTS ===================== -->
   <section id="view-projects" class="view">
     <div class="section-title">Future Projects</div>
@@ -689,6 +774,10 @@ table.mgrid tr.row-balance td{color:var(--accent);}
     <span class="tab-badge" id="budget-start-badge">Start here</span>
     <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 6h16M4 12h16M4 18h10"/></svg>
     Budget
+  </button>
+  <button data-tab="summary" onclick="showTab('summary')">
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 12A9 9 0 1 1 12 3v9z"/><path d="M16 3.9A9 9 0 0 1 20.1 8H16z"/></svg>
+    Summary
   </button>
   <button data-tab="projects" onclick="showTab('projects')">
     <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 2l2.4 6.6L21 10l-5 4.3L17.5 21 12 17.5 6.5 21 8 14.3 3 10l6.6-1.4z"/></svg>
@@ -1913,6 +2002,7 @@ let projectSortField = 'priority';
 let projectSortDir = 'asc';
 let projectFilterStatus = 'all';
 let projectFilterSearch = '';
+let projectTypesOpen = false;
 
 function projectStatusRank(p){
   const i = PROJECT_STATUSES.findIndex(s=>s.id===(p.status||'someday'));
@@ -1973,7 +2063,15 @@ function renderProjectToolbar(){
         ${PROJECT_SORT_FIELDS.map(f=>`<option value="${f.id}" ${projectSortField===f.id?'selected':''}>Sort: ${f.label}</option>`).join('')}
       </select>
       <button type="button" class="sort-dir-btn" onclick="toggleProjectSortDir()" title="${projectSortDir==='asc'?'Ascending — click for descending':'Descending — click for ascending'}" aria-label="Toggle sort direction">${projectSortDir==='asc'?'&uarr;':'&darr;'}</button>
+      <button type="button" class="types-btn${projectTypesOpen?' open':''}" onclick="toggleProjectTypesPanel()" aria-expanded="${projectTypesOpen}">Manage types</button>
     </div>
+    ${projectTypesOpen ? `<div class="types-panel">
+      ${state.projectTypes.length===0 ? `<span class="faint" style="font-size:.72rem;">No types yet — type one into any project's Type field to add it.</span>` :
+        state.projectTypes.map(t=>{
+          const used = state.futureProjects.filter(p=>p.type===t).length;
+          return `<span class="type-chip">${escapeHTML(t)}${used?`<span class="type-chip-count">${used}</span>`:''}<button type="button" class="type-chip-del" data-type="${escapeHTML(t)}" onclick="removeProjectType(this.dataset.type)" aria-label="Remove type ${escapeHTML(t)}">&times;</button></span>`;
+        }).join('')}
+    </div>` : ''}
     <div class="project-toolbar-row">
       <select class="bc-sel" onchange="setProjectFilterStatus(this.value)" title="Filter by status">
         <option value="all" ${projectFilterStatus==='all'?'selected':''}>All statuses</option>
@@ -2075,6 +2173,19 @@ function setFutureProjectType(id, value){
   const trimmed = (value||'').trim();
   p.type = trimmed || null;
   if(trimmed && !state.projectTypes.includes(trimmed)) state.projectTypes.push(trimmed);
+  saveState();
+  deferRenderAll();
+}
+function toggleProjectTypesPanel(){ projectTypesOpen = !projectTypesOpen; deferRenderAll(); }
+// Removing a type also clears it from any project still using it: types
+// mostly get removed because they were a typo, and leaving the typo sitting
+// on those rows would defeat the point.
+function removeProjectType(name){
+  if(!state.projectTypes.includes(name)) return;
+  const users = state.futureProjects.filter(p=>p.type===name);
+  if(users.length && !confirm(`"${name}" is set on ${users.length} project${users.length===1?'':'s'}. Remove it and clear their Type?`)) return;
+  state.projectTypes = state.projectTypes.filter(t=>t!==name);
+  users.forEach(p=>{ p.type = null; });
   saveState();
   deferRenderAll();
 }
@@ -2447,6 +2558,212 @@ function resetAllData(){
 /* =========================================================================
    MISC
    ========================================================================= */
+/* =========================================================================
+   SUMMARY: a snapshot of what's set up in Budget
+   ========================================================================= */
+// Read-only on purpose: ensureWeek() and monthSummary() both write to state
+// when called, so nothing in this section may use them.
+function timesPerYear(c){
+  const freq = c.frequency || 'monthly';
+  if(freq==='monthly') return 12;
+  if(freq==='quarterly') return 4;
+  if(freq==='biannual') return 2;
+  if(freq==='yearly') return 1;
+  // With no start date the forecast treats biweekly as every week, so match it.
+  if(freq==='biweekly' && c.biweeklyAnchor) return 26;
+  return 52;
+}
+
+function budgetSnapshot(){
+  const changing = [];
+  const read = (kind) => state.categories[kind].flatMap(c => {
+    // "Rec" off means there's no standing amount, even if an old one is still stored.
+    if(c.recurring===false){ changing.push(c.name); return []; }
+    const yearly = (Number(c.estimate)||0) * timesPerYear(c);
+    if(!yearly) return [];
+    return [{ name:c.name, yearly, schedule:frequencyLabel(c), group: kind==='expense' ? expenseGroupOf(c) : null }];
+  }).sort((a,b) => b.yearly - a.yearly);
+  const total = (list) => list.reduce((sum,x) => sum + x.yearly, 0);
+
+  const income = read('income');
+  const expenses = read('expense');
+  const saving = expenses.filter(x => x.group==='Savings');
+  const bills = expenses.filter(x => x.group!=='Savings');
+  const groups = EXPENSE_GROUPS.map(name => {
+    const items = bills.filter(x => x.group===name);
+    return { name, items, yearly: total(items) };
+  }).filter(g => g.items.length).sort((a,b) => b.yearly - a.yearly);
+
+  const yearly = { income: total(income), spending: total(bills), savings: total(saving) };
+  yearly.left = yearly.income - yearly.spending - yearly.savings;
+  const monthly = { income: Math.round(yearly.income/12), spending: Math.round(yearly.spending/12), savings: Math.round(yearly.savings/12) };
+  // Worked out from the rounded figures so the numbers on screen always add up.
+  monthly.left = monthly.income - monthly.spending - monthly.savings;
+
+  return { income, saving, bills, groups, changing, yearly, monthly };
+}
+
+// At most six slices: past that they're too thin to tell apart, so the
+// smallest groups fold into "Everything else".
+function summarySlices(groups){
+  const positive = groups.filter(g => g.yearly>0);
+  if(positive.length<=6) return positive.map(g => ({ name:g.name, yearly:g.yearly }));
+  const top = positive.filter(g => g.name!=='Other').slice(0,5);
+  const rest = positive.filter(g => !top.includes(g)).reduce((sum,g) => sum + g.yearly, 0);
+  return [...top.map(g => ({ name:g.name, yearly:g.yearly })), { name:'Everything else', yearly:rest }];
+}
+
+function summaryColor(name){
+  return EXPENSE_GROUPS.includes(name) ? `var(--g-${name.toLowerCase()})` : 'var(--g-other)';
+}
+function summaryPercent(part, whole){
+  if(!(part>0 && whole>0)) return '0%';
+  const pct = part/whole*100;
+  return pct<1 ? '<1%' : Math.round(pct)+'%';
+}
+function summaryWidth(part, largest){
+  return (part>0 && largest>0) ? Math.min(100, part/largest*100) : 0;
+}
+
+function summaryOverviewHTML(s){
+  const m = s.monthly, y = s.yearly;
+  const short = m.left<0;
+  const tile = (label, month, year) => `<div class="sum-tile"><div class="sum-label">${label}</div><div class="sum-value">${money(month)}</div><div class="sum-sub">${money(year)} a year</div></div>`;
+  const scale = Math.max(y.income, y.spending + y.savings);
+  const segment = (label, value, color) => value>0 ? `<span style="width:${summaryWidth(value,scale)}%; background:${color}" title="${label}: ${money(value/12)} a month"></span>` : '';
+  const key = (label, color) => `<span><i class="sum-dot" style="background:${color}"></i>${label}</span>`;
+  let verdict;
+  if(!y.income) verdict = 'No income is entered in Budget yet.';
+  else if(short) verdict = `Your budget plans to use ${money(-m.left)} more than comes in each month.`;
+  else verdict = `You spend ${summaryPercent(y.spending,y.income)} of your income and save ${summaryPercent(y.savings,y.income)}.`;
+  return `<div class="card">
+    <h3>Your average month</h3>
+    <div class="sum-sub">Based on the recurring amounts in Budget. Weekly, biweekly and less frequent items are spread evenly across the year.</div>
+    <div class="sum-top" style="margin-top:12px;">
+      <div class="sum-tile sum-hero">
+        <div class="sum-label">${short?'Short each month':'Left over each month'}</div>
+        <div class="sum-value ${short?'neg':'pos'}">${money(Math.abs(m.left))}</div>
+        <div class="sum-sub">${verdict}</div>
+      </div>
+      ${tile('Income',m.income,y.income)}
+      ${tile('Spending',m.spending,y.spending)}
+      ${tile('Savings',m.savings,y.savings)}
+    </div>
+    <div class="sum-flow">
+      <div class="sum-flow-row"><span>Money in</span><div class="sum-stack">${segment('Income',y.income,'var(--income)')}</div></div>
+      <div class="sum-flow-row"><span>Where it goes</span><div class="sum-stack">
+        ${segment('Spending',y.spending,'var(--s-spending)')}${segment('Savings',y.savings,'var(--g-savings)')}${segment('Left over',y.left,'var(--s-left)')}
+      </div></div>
+      <div class="sum-legend">${key('Spending','var(--s-spending)')}${key('Savings','var(--g-savings)')}${y.left>0?key('Left over','var(--s-left)'):''}</div>
+    </div>
+  </div>`;
+}
+
+function summaryDonutHTML(slices){
+  const total = slices.reduce((sum,x) => sum + x.yearly, 0);
+  const radius = 80, around = 2*Math.PI*radius, gap = slices.length>1 ? 2 : 0;
+  let offset = 0;
+  const arcs = slices.map(x => {
+    const length = x.yearly/total*around;
+    const detail = `${summaryPercent(x.yearly,total)} of spending`;
+    const amount = money(x.yearly/12);
+    const arc = `<circle class="sum-slice" cx="100" cy="100" r="${radius}" style="stroke:${summaryColor(x.name)}" stroke-dasharray="${Math.max(length-gap,.5)} ${around}" stroke-dashoffset="${-offset}" tabindex="0" role="img" aria-label="${x.name}: ${amount} a month, ${detail}" data-label="${x.name}" data-amount="${amount}" data-detail="${detail}" onpointerenter="showSummarySlice(this)" onpointerleave="resetSummarySlice(this)" onfocus="showSummarySlice(this)" onblur="resetSummarySlice(this)"></circle>`;
+    offset += length;
+    return arc;
+  }).join('');
+  return `<div class="sum-donut-wrap">
+    <div class="sum-donut" data-total="${money(total/12)}">
+      <svg viewBox="0 0 200 200" aria-label="Spending by group">${arcs}</svg>
+      <div class="sum-center"><span>Spending</span><b>${money(total/12)}</b><span>a month</span></div>
+    </div>
+    <div class="sum-keys">${slices.map(x => `<div class="sum-line">
+      <i class="sum-dot" style="background:${summaryColor(x.name)}"></i><span class="sum-name">${x.name}</span>
+      <span class="sum-amt">${money(x.yearly/12)}</span><span class="sum-amt sum-pct">${summaryPercent(x.yearly,total)}</span>
+    </div>`).join('')}</div>
+  </div>`;
+}
+function setSummaryCenter(donut, label, amount, detail){
+  const [top, middle, bottom] = donut.querySelector('.sum-center').children;
+  top.textContent = label; middle.textContent = amount; bottom.textContent = detail;
+}
+function showSummarySlice(el){
+  setSummaryCenter(el.closest('.sum-donut'), el.dataset.label, el.dataset.amount, el.dataset.detail);
+}
+function resetSummarySlice(el){
+  const donut = el.closest('.sum-donut');
+  setSummaryCenter(donut, 'Spending', donut.dataset.total, 'a month');
+}
+
+function summaryBarsHTML(items, color){
+  const largest = Math.max(0, ...items.map(x => x.yearly));
+  return items.map(x => `<div class="sum-bar-item">
+    <div class="sum-line"><span class="sum-name">${escapeHTML(x.name)}</span><span class="sum-amt">${money(x.yearly/12)}</span></div>
+    <div class="sum-track"><span class="sum-fill" style="width:${summaryWidth(x.yearly,largest)}%; background:${color}"></span></div>
+  </div>`).join('');
+}
+
+function summaryBreakdownHTML(s){
+  const groups = s.saving.length ? [...s.groups, { name:'Savings', items:s.saving, yearly:s.yearly.savings }] : s.groups;
+  if(!groups.length) return '';
+  const largest = Math.max(...groups.map(g => g.yearly));
+  return `<div class="card">
+    <h3>Full breakdown</h3>
+    <div class="sum-sub">Click a group to see what's in it.</div>
+    <div class="sum-cols sum-head"><span>Group</span><span class="sum-track"></span><span class="sum-amt">Per month</span><span class="sum-amt">Per year</span><span class="sum-amt" title="Share of income">Of pay</span></div>
+    ${groups.map(g => `<details class="sum-group">
+      <summary class="sum-cols">
+        <span class="sum-name">${g.name}</span>
+        <span class="sum-track"><span class="sum-fill" style="width:${summaryWidth(g.yearly,largest)}%; background:${summaryColor(g.name)}"></span></span>
+        <span class="sum-amt">${money(g.yearly/12)}</span><span class="sum-amt">${money(g.yearly)}</span><span class="sum-amt">${s.yearly.income>0?summaryPercent(g.yearly,s.yearly.income):'-'}</span>
+      </summary>
+      ${g.items.map(x => `<div class="sum-cols sum-bill">
+        <span class="sum-name">${escapeHTML(x.name)}<small>${x.schedule}</small></span><span class="sum-track"></span>
+        <span class="sum-amt">${money(x.yearly/12)}</span><span class="sum-amt">${money(x.yearly)}</span><span></span>
+      </div>`).join('')}
+    </details>`).join('')}
+  </div>`;
+}
+
+function summaryAccountsHTML(){
+  const balances = state.accountDefs.map(a => ({ name:a.name, value:Number(state.accounts[a.id])||0 }));
+  const have = balances.reduce((sum,a) => sum + Math.max(0,a.value), 0);
+  const owe = balances.reduce((sum,a) => sum + Math.max(0,-a.value), 0);
+  return `<div class="card">
+    <h3>Accounts</h3>
+    <div class="sum-sub">Your latest balances.</div>
+    ${balances.filter(a => a.value!==0).map(a => `<div class="sum-line"><span class="sum-name">${escapeHTML(a.name)}</span><span class="sum-amt ${a.value<0?'neg':''}">${money(a.value)}</span></div>`).join('')}
+    <div class="sum-line sum-total"><span class="sum-name">You have</span><span class="sum-amt">${money(have)}</span></div>
+    <div class="sum-line"><span class="sum-name">You owe</span><span class="sum-amt">${money(owe)}</span></div>
+    <div class="sum-line sum-total"><span class="sum-name">Total</span><span class="sum-amt ${have-owe<0?'neg':''}">${money(have-owe)}</span></div>
+  </div>`;
+}
+
+function renderSummary(){
+  const s = budgetSnapshot();
+  const slices = summarySlices(s.groups);
+  let html;
+  if(!s.income.length && !s.bills.length && !s.saving.length){
+    html = `<div class="card sum-empty"><h3>Nothing to summarize yet</h3>
+      <div class="sum-sub">Enter your paychecks and bills in Budget and your charts will appear here.</div>
+      <button class="primary-btn" onclick="showTab('budget')">Go to Budget</button></div>${summaryAccountsHTML()}`;
+  } else {
+    html = `${summaryOverviewHTML(s)}
+      ${slices.length ? `<div class="sum-grid">
+        <div class="card"><h3>What you spend money on</h3><div class="sum-sub">Average per month. Savings is counted separately.</div>${summaryDonutHTML(slices)}</div>
+        <div class="card"><h3>Biggest expenses</h3><div class="sum-sub">Average per month.</div>${summaryBarsHTML(s.bills.slice(0,6),'var(--s-spending)')}</div>
+      </div>` : ''}
+      ${summaryBreakdownHTML(s)}
+      <div class="sum-grid">
+        <div class="card"><h3>Where your income comes from</h3><div class="sum-sub">Average per month.</div>${s.income.length ? summaryBarsHTML(s.income,'var(--income)') : '<div class="sum-line">No income entered yet.</div>'}</div>
+        ${summaryAccountsHTML()}
+      </div>`;
+  }
+  if(s.changing.length){
+    html += `<div class="card sum-sub"><b>Not included:</b> ${s.changing.map(escapeHTML).join(', ')}. "Rec" is off for these in Budget, so they have no regular amount to summarize.</div>`;
+  }
+  document.getElementById('summary-body').innerHTML = html;
+}
+
 function escapeHTML(s){
   return String(s).replace(/[&<>"']/g, m => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[m]));
 }
@@ -2464,6 +2781,7 @@ function renderAll(){
   if(activeTab==='weekly') renderWeekly();
   if(activeTab==='monthly') renderMonthly();
   if(activeTab==='budget') renderBudget();
+  if(activeTab==='summary') renderSummary();
   if(activeTab==='projects') renderProjects();
 }
 

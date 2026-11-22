@@ -12,9 +12,9 @@ This guide explains how the tool works and how a new user should set it up and u
   - **`home.html`** — the introduction/landing page: what the tool is, how it works, and a link into the app.
   - **`index.html`** — the actual tracker. This is the single source of truth for the app's code — every other packaging of it (desktop, mobile) wraps this exact file rather than maintaining a separate copy.
 - **`desktop-app/`** — packages `index.html` as an installable Windows/Mac/Linux desktop app (via Tauri). Not needed to just use the tracker in a browser. See `desktop-app/README.md` for build instructions — installers can be built locally, or via the included GitHub Actions workflow (recommended, and required on Windows machines with Smart App Control enabled, which blocks local Rust builds).
-- All data is stored locally in the browser's `localStorage`. Nothing is sent anywhere. Data does not sync between devices or browsers automatically (see [Backing up and moving your data](#10-backing-up-and-moving-your-data)).
+- All data is stored locally in the browser's `localStorage`. Nothing is sent anywhere. Data does not sync between devices or browsers automatically (see [Backing up and moving your data](#11-backing-up-and-moving-your-data)).
 - Built around a simple idea: **every week ends on a Friday.** All income and expenses are organized into these Friday-ending weeks, which roll up into months.
-- Five tabs in the app, reached from the bottom navigation bar: **Home**, **Weekly**, **Monthly**, **Budget**, **Projects**.
+- Six tabs in the app, reached from the bottom navigation bar: **Home**, **Weekly**, **Monthly**, **Budget**, **Summary**, **Projects**.
 
 ---
 
@@ -155,13 +155,32 @@ Category names are locked by default to prevent accidental edits. **Double-click
 
 ---
 
-## 8. The Future Projects tab
+## 8. The Summary tab
+
+A one-screen snapshot of your Budget, with charts. There's nothing to fill in: it reads what you entered in Budget and updates each time you open it.
+
+- **Your average month**: income, spending, savings, and what's left over (or how far short you are), with yearly totals.
+- **What you spend money on**: a ring chart of your expense groups. Point at a slice to see its amount. With more than six groups, the smallest are combined as "Everything else".
+- **Biggest expenses**: your six largest bills.
+- **Full breakdown**: every group per month, per year, and as a share of your income ("Of pay"). Click a group to see the bills inside it.
+- **Where your income comes from** and **Accounts**: your income sources and latest balances.
+
+How it counts:
+
+- It shows what you **plan** to spend. It doesn't use what you ticked or typed in Weekly and Monthly.
+- It shows an **average** month. A $1,200 yearly bill counts as $100 a month, and a weekly amount counts 52 times a year, so it won't match every month on Home or Monthly.
+- Anything in the **Savings** group counts as savings, not spending.
+- Items with **Rec** switched off have no regular amount, so they're left out and listed at the bottom.
+
+---
+
+## 9. The Future Projects tab
 
 A "someday/maybe" list for things you're thinking about — a renovation, a trip, anything you don't want to forget but aren't ready to fold into your weekly budget yet. It's intentionally separate from the rest of the app: nothing here affects your actual budget, accounts, or weekly totals — it's just a place to plan and estimate.
 
 - Tap **+ Add project** to create one.
 - **Double-click** the title (or tap the pencil icon) to rename it, same as category and account names.
-- **Type** — pick from **Home Improvement**, **Vacation**, **Vehicle**, **Rental Property**, or **Other**, or just type your own — anything you type is remembered and offered as a suggestion on every other project too.
+- **Type** — pick from **Home Improvement**, **Vacation**, **Vehicle**, **Rental Property**, or **Other**, or just type your own — anything you type is remembered and offered as a suggestion on every other project too. Made one by accident? Click **Manage types** above the list and hit the **×** on it. If any projects are using it you'll be asked first, and their Type is cleared.
 - **Status** — a dropdown: **Someday/Maybe**, **Planning**, **In Progress**, or **Complete**. Marking a project Complete gives its title a strikethrough so finished projects stay visible but clearly out of the way.
 - **Est.** and **Actual** — optional whole-dollar price fields, so you can compare what you guessed a project would cost against what it actually ran.
 - **Date** — an optional estimated date for the project.
@@ -179,7 +198,7 @@ Widen the window and each project collapses onto a single line, turning the list
 
 ---
 
-## 9. How to fill in the information — a step-by-step first run
+## 10. How to fill in the information — a step-by-step first run
 
 **Step 1 — Set up your categories (Budget tab).**
 Go to Budget. The app ships with a starter set of common categories (Paycheck 1/2, Mortgage, Electric, Food/Groceries, etc.) — rename, delete, or add to them until the list matches your real bills and income sources. For each one:
@@ -205,7 +224,7 @@ That's the entire loop: set it up once, then check boxes and update balances as 
 
 ---
 
-## 10. Backing up and moving your data
+## 11. Backing up and moving your data
 
 Because everything lives in the browser's local storage, it is tied to **one browser on one device**. To move data to a new device, a different browser, or just keep a safety copy:
 
@@ -216,7 +235,7 @@ There is no automatic cloud sync. Export regularly if the data matters to you.
 
 ---
 
-## 11. Good to know
+## 12. Good to know
 
 - All dollar amounts are whole dollars — no cents. Every dollar field shows a `$` prefix and has no spinner arrows; type the number directly.
 - Pressing Tab moves between fields in order, the same as any form.
